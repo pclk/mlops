@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 const links = [
   { link: '/salary', label: 'Salary' },
-  { link: '/post-prediction', label: 'Post Prediction' },
+  { link: '/used_car_prediction', label: 'Price' },
   { link: '/education', label: 'Education' },
 ];
 

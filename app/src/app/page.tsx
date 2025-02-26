@@ -28,12 +28,12 @@ export default function Home() {
           </Button>
           <Button
             component={Link}
-            href="/post-prediction"
+            href="/used_car_prediction"
             size="lg"
             variant="gradient"
             gradient={{ from: 'violet', to: 'grape', deg: 45 }}
           >
-            Post Predictor AI
+            Price Predictor AI
           </Button>
           <Button
             component={Link}

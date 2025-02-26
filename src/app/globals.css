@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #171717;
+  --foreground: #ededed;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main container for the Post Prediction page */
+.container {
+  max-width: 1200px;
+  padding: 2rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  justify-content: center;
+}
+
+/* Left Container - Form and Prediction Result */
+.left-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+}
+
+/* Form Styling */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+textarea {
+  padding: 1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  min-height: 120px;
+  resize: vertical;
+  color: var(--foreground);
+  background-color: var(--background);
+  outline: none;
+  width: 100%; /* Full width */
+}
+
+textarea:focus {
+  border-color: #0070f3;
+  box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
+}
+
+textarea::placeholder {
+  color: #888; /* More visible placeholder text */
+}
+
+button {
+  padding: 1rem;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005bb5;
+}
+
+/* Prediction result box */
+.prediction-result {
+  padding: 1rem;
+  background-color: var(--background);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  min-height: 150px; /* Make sure there's enough space */
+  color: var(--foreground);
+  border: 1px solid #ddd;
+  box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
+}
+
+/* Right Container - LLM Response Box */
+.right-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.prediction-result.llm {
+  padding: 1rem;
+  background-color: var(--background); /* Make the LLM box black */
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  min-height: 150px; /* Ensure there's space even when no LLM response */
+  color: var(--foreground);
+  border: 1px solid #ddd;
+  box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
+}
+
+.prediction-result p {
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: #171717;
+  color: white;
+}
+
+
+.nav-left {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-right {
+  display: flex;
+  gap: 1rem;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}

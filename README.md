@@ -14,6 +14,34 @@
 - **DVC** metadata (`.dvc/` and `datasets.dvc`) to track datasets.
 - **MLflow** integration to track model training and evaluation.
 
+## 🚀 Installation & Setup
+
+### **1️⃣ Change to Project Directory**
+```bash
+cd mlops/used-car-predictor
+```
+
+### **2️⃣ Set Up the Virtual Environment with Poetry**
+```bash
+poetry install
+```
+
+### **3️⃣ Activate the Virtual Environment (If it isn't already)**
+```bash
+poetry env activate
+```
+
+### **4️⃣ Run the Jupyter Notebook**
+Start Jupyter and open the notebook:
+
+```bash
+jupyter notebook
+```
+
+Open **`notebooks/ML Pipeline.ipynb`**
+
+---
+
 ### **🔹 Getting the Dataset**
 The dataset is stored in **Google Cloud Storage (GCS)** under the remote name **`myremote`** (`gs://mlops-assignment-dvc-bucket`).  
 
@@ -28,51 +56,16 @@ The dataset is stored in **Google Cloud Storage (GCS)** under the remote name **
 
 3. Add the DVC remote (if not already configured):  
    ```bash
-   dvc remote add myremote gs://mlops-assignment-dvc-bucket
-   dvc remote modify myremote credentialpath $GOOGLE_APPLICATION_CREDENTIALS
+   poetry run dvc remote add myremote gs://mlops-assignment-dvc-bucket
+   poetry run dvc remote modify myremote credentialpath $GOOGLE_APPLICATION_CREDENTIALS
    ```
 
 4. Pull the dataset:  
    ```bash
-   dvc pull
+   poetry run dvc pull
    ```
 
 This will download the necessary dataset files to your local environment.
-
----
-
-## 🚀 Installation & Setup
-
-### **1️⃣ Change to Project Directory**
-```bash
-cd used-car-predictor
-```
-
-### **2️⃣ Set Up the Virtual Environment with Poetry**
-```bash
-poetry install
-```
-
-### **3️⃣ Activate the Virtual Environment**
-```bash
-poetry shell
-```
-
-### **4️⃣ Pull the Dataset using DVC**
-Ensure you have set up your **Google Cloud credentials**, then run:
-
-```bash
-dvc pull
-```
-
-### **5️⃣ Run the Jupyter Notebook**
-Start Jupyter and open the notebook:
-
-```bash
-jupyter notebook
-```
-
-Open **`notebooks/ML Pipeline.ipynb`** and execute the cells.
 
 ---
 
@@ -112,18 +105,6 @@ To apply new changes, edit `configs/config.yaml` before running the notebook.
 
 ---
 
-## 📜 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for more details.
-
----
-
-## 🙌 Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or suggestions.
-
----
-
 ## 📬 Contact
 
-For any questions, please contact **misterworker** on GitHub.
+For any questions, please contact **misterworker** or **pclk** on GitHub.

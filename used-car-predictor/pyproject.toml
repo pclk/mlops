@@ -1,5 +1,5 @@
 [project]
-name = "mlops-training"
+name = "used-car-predictor"
 version = "0.1.0"
 description = ""
 authors = [

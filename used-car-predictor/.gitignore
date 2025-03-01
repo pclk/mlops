@@ -1,0 +1,9 @@
+.env
+.ipynb_checkpoints/
+catboost_info/
+venv
+/datasets
+mlruns/
+mlops-452409-85f00e73ede8.json
+__pycache__
+.pytest_cache

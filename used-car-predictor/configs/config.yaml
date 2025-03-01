@@ -1,0 +1,12 @@
+experiment:
+  name: car_price_prediction
+  target: "Price (INR Lakhs)"
+  categorical_features: ['Location', 'Fuel_Type', 'Transmission']
+  remove_outliers: true
+  session_id: 123
+  imputation_type: "simple"
+  numeric_imputation: "median"
+  categorical_imputation: "mode"
+  normalize: true
+  log_experiment: true
+  experiment_name: "experiment1"

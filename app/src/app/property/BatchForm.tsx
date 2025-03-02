@@ -7,6 +7,8 @@ import {
   LoadingOverlay, Tooltip, Switch, Select,
   Grid
 } from '@mantine/core';
+import { Modal, TextInput, NumberInput, Checkbox, } from '@mantine/core';
+
 import { notifications } from '@mantine/notifications';
 import { useDisclosure } from '@mantine/hooks';
 import { FileSpreadsheet, Upload, Database, AlertCircle, Download, Edit, Trash, CheckCircle, BrainCircuit } from 'lucide-react';
@@ -61,15 +63,10 @@ export default function BatchPredictionForm() {
   const startTimeRef = useRef<number>(0);
   const [showBatchAnalysis, setShowBatchAnalysis] = useState(false);
   const [analysisProperty, setAnalysisProperty] = useState<any | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<any>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
 
-  // Property type labels for display
-  const propertyTypeLabels: Record<string, string> = {
-    'h': 'House',
-    't': 'Townhouse',
-    'u': 'Unit/Apartment'
-  };
-
-  // File upload handler
   const handleFileUpload = (file: File | null) => {
     setFiles(file);
     if (!file) {
@@ -357,12 +354,47 @@ export default function BatchPredictionForm() {
     }
   };
 
-  // Handle row editing
   const handleEditRow = (index: number) => {
-    // In a real implementation, you might open a modal or form to edit the property
-    alert(`Edit functionality would open a form for property ${index + 1}`);
+    setEditingProperty({ ...parsedData[index] });
+    setEditingIndex(index);
+    setEditModalOpen(true);
   };
 
+  const savePropertyEdit = () => {
+    // Create a new array to avoid direct state mutations
+    const updatedData = [...parsedData];
+    updatedData[editingIndex] = editingProperty;
+    setParsedData(updatedData);
+
+    // Re-validate the edited property
+    const newValidation = [...validationResults];
+    newValidation[editingIndex] = validateSingleProperty(editingProperty);
+    setValidationResults(newValidation);
+
+    // Close the modal
+    setEditModalOpen(false);
+  };
+
+  const validateSingleProperty = (property: any): ValidationResult => {
+    const errors: string[] = [];
+
+    if (!property.suburb) {
+      errors.push('Suburb is required');
+    }
+
+    if (property.rooms === null || property.rooms === undefined) {
+      errors.push('Number of rooms is required');
+    }
+
+    if (!property.type) {
+      errors.push('Property type is required');
+    }
+
+    return {
+      hasErrors: errors.length > 0,
+      errors
+    };
+  };
   // Handle row deletion
   const handleDeleteRow = (index: number) => {
     const newData = [...parsedData];
@@ -581,6 +613,93 @@ export default function BatchPredictionForm() {
           </Card>
         )}
       </Stack>
+      <Modal
+        opened={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Property"
+        size="lg"
+      >
+        {editingProperty && (
+          <Stack spacing="md">
+            <TextInput
+              label="Suburb"
+              required
+              value={editingProperty.suburb}
+              onChange={(e) => setEditingProperty({ ...editingProperty, suburb: e.target.value })}
+            />
+
+            <NumberInput
+              label="Rooms"
+              required
+              min={1}
+              value={editingProperty.rooms}
+              onChange={(value) => setEditingProperty({ ...editingProperty, rooms: value })}
+            />
+
+            <Select
+              label="Property Type"
+              required
+              data={[
+                { value: 'h', label: 'House' },
+                { value: 't', label: 'Townhouse' },
+                { value: 'u', label: 'Unit/Apartment' }
+              ]}
+              value={editingProperty.type}
+              onChange={(value) => setEditingProperty({ ...editingProperty, type: value || '' })}
+            />
+
+            <NumberInput
+              label="Land Size (m²)"
+              value={editingProperty.landsize}
+              onChange={(value) => setEditingProperty({ ...editingProperty, landsize: value })}
+            />
+
+            <NumberInput
+              label="Building Area (m²)"
+              value={editingProperty.buildingArea}
+              onChange={(value) => setEditingProperty({ ...editingProperty, buildingArea: value })}
+            />
+
+            <NumberInput
+              label="Distance"
+              value={editingProperty.distance}
+              onChange={(value) => setEditingProperty({ ...editingProperty, distance: value })}
+            />
+
+            <NumberInput
+              label="Bathrooms"
+              min={0}
+              value={editingProperty.bathroom}
+              onChange={(value) => setEditingProperty({ ...editingProperty, bathroom: value })}
+            />
+
+            <NumberInput
+              label="Car Spaces"
+              min={0}
+              value={editingProperty.car}
+              onChange={(value) => setEditingProperty({ ...editingProperty, car: value })}
+            />
+
+            <TextInput
+              label="Direction"
+              value={editingProperty.direction}
+              onChange={(e) => setEditingProperty({ ...editingProperty, direction: e.target.value })}
+            />
+
+            <Checkbox
+              label="Land Size Not Owned"
+              checked={editingProperty.landSizeNotOwned}
+              onChange={(e) => setEditingProperty({ ...editingProperty, landSizeNotOwned: e.currentTarget.checked })}
+            />
+
+            <Group position="right" mt="md">
+              <Button variant="outline" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+              <Button onClick={savePropertyEdit}>Save Changes</Button>
+            </Group>
+          </Stack>
+        )}
+      </Modal>
+
     </Box>
   );
 }
@@ -666,6 +785,7 @@ function BatchSummaryCard({ properties, predictions }: { properties: any[], pred
           noRecordsText="No property type data available"
         />
       </Stack>
+
     </Card>
   );
 }

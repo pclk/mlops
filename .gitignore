@@ -9,4 +9,8 @@ property-predictor/notebooks/*.csv
 property-predictor/notebooks/.jukit
 property-predictor/notebooks/catboost_info
 property-predictor/notebooks/logs.log
+
+
+
 property-predictor/notebooks/.ipynb_checkpoints
+property-predictor/configs/.ipynb_checkpoints

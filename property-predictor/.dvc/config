@@ -1,0 +1,6 @@
+[core]
+    remote = gcp
+['remote "01_melbourne_residential.csv"']
+    url = gs://dvc-property-price
+['remote "gcp"']
+    url = gs://dvc-property-price

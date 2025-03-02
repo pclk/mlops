@@ -1,9 +1,15 @@
-# 🚗 Used Car Predictor
+# 🚗 Used Car + 🏘️ Property Predictor
 
 ## 📌 Project Overview
-`used-car-predictor` is a machine learning project designed to predict the prices of used cars. The project follows a structured and reproducible workflow using **Poetry** for dependency management, **Hydra** for configuration handling, **DVC** for dataset versioning, and **MLflow** for experiment tracking.
+`used-car-predictor` is a machine learning project designed to predict the prices of used cars. `property-predictor` is also a ML project predicting property prices The project follows a structured and reproducible workflow using **Poetry** for dependency management, **Hydra** for configuration handling, **DVC** for dataset versioning, and **MLflow** for experiment tracking.
 
 ---
+
+## Cloning this project
+Please run the following:
+```sh
+git clone git@github.com:pclk/mlops.git
+```
 
 ## 📌 Used Car Predictor
 
@@ -16,22 +22,22 @@
 
 ## 🚀 Installation & Setup
 
-### **1️⃣ Change to Project Directory**
+### Change to Project Directory**
 ```bash
 cd mlops/used-car-predictor
 ```
 
-### **2️⃣ Set Up the Virtual Environment with Poetry**
+### Set Up the Virtual Environment with Poetry**
 ```bash
 poetry install
 ```
 
-### **3️⃣ Activate the Virtual Environment (If it isn't already)**
+### Activate the Virtual Environment (If it isn't already)**
 ```bash
 poetry env activate
 ```
 
-### **4️⃣ Run the Jupyter Notebook**
+### Run the Jupyter Notebook**
 Start Jupyter and open the notebook:
 
 ```bash

@@ -1,32 +1,46 @@
+
+
 'use server'
 
-interface SalaryPredictionPayload {
-  job_description: string;
-  job_title: string;
-  contract_type: string;
-  education_level: string;
-  seniority: string;
-  min_years_experience: string;
-  location_us: string[];
-  location_in: string[];
+interface FormValues {
+  suburb: string;
+  rooms: number | null;
+  type: string;
+  method: string;
+  seller: string;
+  distance: number | null;
+  bathroom: number | null;
+  car: number | null;
+  landsize: number | null;
+  buildingArea: number | null;
+  propertyAge: number | null;
+  direction: string;
+  landSizeNotOwned: boolean;
 }
 
-export async function predictSalary(payload: SalaryPredictionPayload, country_code: string, location: string) {
+export async function predictPropertyPrice(payload: FormValues) {
   try {
-    const response = await fetch('https://salary-prediction-491899619233.asia-southeast1.run.app/predict', {
+    const response = await fetch('https://housing-price-prediction-csdc-f774f0f9.mt-guc1.bentoml.ai/predict', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        job_description: payload.job_description,
-        job_title: payload.job_title,
-        contract_type: payload.contract_type,
-        education_level: payload.education_level,
-        seniority: payload.seniority,
-        min_years_experience: payload.min_years_experience,
-        country: country_code,
-        location: location
+        housing_features: {
+          Suburb: payload.suburb,
+          Rooms: payload.rooms || 0,
+          Type: payload.type,
+          Method: payload.method,
+          Seller: payload.seller,
+          Distance: payload.distance || 0,
+          Bathroom: payload.bathroom || 0,
+          Car: payload.car || 0,
+          Landsize: payload.landsize || 0,
+          BuildingArea: payload.buildingArea || undefined,
+          PropertyAge: payload.propertyAge || undefined,
+          Direction: payload.direction,
+          LandSizeNotOwned: payload.landSizeNotOwned,
+        },
       }),
     });
 
@@ -38,6 +52,8 @@ export async function predictSalary(payload: SalaryPredictionPayload, country_co
     return { success: true, data };
   } catch (error) {
     console.error('Prediction error:', error);
-    return { success: false, error: 'Failed to predict salary' };
+    return { success: false, error: 'Failed to predict property price' };
   }
 }
+
+

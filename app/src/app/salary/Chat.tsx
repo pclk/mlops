@@ -1,4 +1,3 @@
-
 "use client"
 
 import { ActionIcon, Box, Button, Code, Group, List, Paper, Popover, ScrollArea, Slider, Stack, Text, TextInput, Title } from '@mantine/core';
@@ -14,51 +13,50 @@ interface Message {
 }
 
 interface ModelConfig {
-  medianSalary: {
-    US: number;
-    SG: number;
-    IN: number;
+  propertyMarketFactors: {
+    interestRate: number;
+    marketGrowth: number;
+    inflationRate: number;
   };
-  costOfLiving: {
-    US: number;
-    SG: number;
-    IN: number;
+  locationFactors: {
+    urbanPremium: number;
+    suburbanDiscount: number;
+    ruralDiscount: number;
   };
 }
 
 interface ChatProps {
-  predictions: {
-    [key: string]: {
-      salary: number | null;
-      duration: number;
-      relativeDuration: number;
-    };
+  predictedPrice: number | null;
+  duration: number;
+  propertyDetails: {
+    suburb: string;
+    rooms: number | null;
+    type: string;
+    method: string;
+    seller: string;
+    distance: number | null;
+    bathroom: number | null;
+    car: number | null;
+    landsize: number | null;
+    buildingArea: number | null;
+    propertyAge: number | null;
+    direction: string;
+    landSizeNotOwned: boolean;
   };
   triggerInitialAnalysis?: boolean;
-  jobDetails: {
-    job_title: string;
-    job_description: string;
-    contract_type: string;
-    education_level: string;
-    seniority: string;
-    min_years_experience: string;
-    countries: string[];
-    location_us: string[];
-    location_in: string[];
-  };
 }
 
-export default function Chat({ predictions, jobDetails, triggerInitialAnalysis }: ChatProps) {
+export default function Chat({ predictedPrice, duration, propertyDetails, triggerInitialAnalysis }: ChatProps) {
   const [modelConfig, setModelConfig] = useState<ModelConfig>({
-    medianSalary: {
-      US: 63795,
-      SG: 49287,
-      IN: 3900
+    propertyMarketFactors: {
+      interestRate: 5.5,
+      marketGrowth: 3.2,
+      inflationRate: 2.8
     },
-    costOfLiving: {
-      US: 13998,
-      SG: 13576,
-      IN: 4015
+    locationFactors: {
+      urbanPremium: 15,
+      suburbanDiscount: 5,
+      ruralDiscount: 12
     }
   });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -72,19 +70,18 @@ export default function Chat({ predictions, jobDetails, triggerInitialAnalysis }
     }
   };
 
-
   const [messages, setMessages] = useState<Message[]>([
     {
       content:
         `# 👋 Hello!
 
-I'm your salary prediction assistant. I can help you understand the salary predictions for **${jobDetails.job_title || 'your job search'}**.
+I'm your property price prediction assistant. I can help you understand the property price prediction for **${propertyDetails.suburb || 'your property'}**.
 
 Here are some things you can ask me about:
-- Salary predictions and analysis
-- Job market insights
-- Negotiation tips
-- Career advice
+- Property price analysis and comparisons
+- Location insights and neighborhood information
+- Market trends and property valuation factors
+- Home buying and selling tips
 
 Feel free to ask any questions!`,
       sender: 'bot',
@@ -98,15 +95,17 @@ Feel free to ask any questions!`,
   }, [messages]); // Scroll when messages change
 
   useEffect(() => {
-    if (triggerInitialAnalysis) {
-      const initialPrompt = "Please analyze the salary predictions and provide a comprehensive recommendation.\
-        Include insights about regional differences, market competitiveness, and any notable patterns in the data.\
+    if (triggerInitialAnalysis && predictedPrice) {
+      const initialPrompt = "Please analyze the property price prediction and provide a comprehensive assessment.\
+        Include insights about location value, property features, and current market conditions.\
         Use numbers, percentages and math to explore and illustrate your point.\
-        At the end, provide a recommended location, and ask 3 questions to know more about the user to tailor your response.\
-        Start with 'Hi there! I saw you just made a prediction! ...'";
+        Compare with typical property values in the area and discuss potential investment value.\
+        At the end, provide 3 suggestions for improving property value, and ask 3 questions to know more about the user's goals.\
+        Start with 'Hi there! I saw you just made a property price prediction! ...'";
       handleSubmit(new Event('submit') as any, initialPrompt);
     }
-  }, [triggerInitialAnalysis, predictions]);
+  }, [triggerInitialAnalysis, predictedPrice]);
+
   const handleSubmit = async (e: React.FormEvent, overrideInput?: string) => {
     e.preventDefault();
     const messageText = overrideInput || input;
@@ -137,7 +136,7 @@ Feel free to ask any questions!`,
 
     try {
       // @ts-expect-error
-      const stream = streamGeminiResponse(messageText, predictions, jobDetails, messages, modelConfig);
+      const stream = streamGeminiResponse(messageText, { price: predictedPrice, duration }, propertyDetails, messages, modelConfig);
 
       for await (const chunk of stream) {
         setMessages(prev => {
@@ -171,12 +170,12 @@ Feel free to ask any questions!`,
         height: '100%',
       }}
     >
-      <Stack >
+      <Stack>
         <Title order={3} mb="lg">
           <Group justify="space-between" style={{ width: '100%' }}>
             <Group>
-              <span>💰</span>
-              <span>Salary Expert AI</span>
+              <span>🏠</span>
+              <span>Property Expert AI</span>
             </Group>
             <Popover width={400} position="bottom-end" shadow="md">
               <Popover.Target>
@@ -190,61 +189,62 @@ Feel free to ask any questions!`,
 
                   <Box>
                     <Group gap={4}>
-                      <Text size="sm" fw={500}>Median Salary (USD)</Text>
-                      <Popover width={220} position="bottom" shadow="md">
+                      <Text size="sm" fw={500}>Property Market Factors</Text>
+                      <Popover width={250} position="bottom" shadow="md">
                         <Popover.Target>
                           <IconInfoCircle size={16} style={{ color: 'gray', cursor: 'pointer' }} />
                         </Popover.Target>
                         <Popover.Dropdown>
                           <Text size="sm">
-                            US: $63,795 (<a href="https://www.sofi.com/learn/content/average-salary-in-us/" target="_blank" rel="noopener noreferrer" style={{ color: '#228BE6' }}>SoFi 2023</a>)<br />
-                            SG: $49,287 (<a href="https://stats.mom.gov.sg/Pages/Income-Summary-Table.aspx" target="_blank" rel="noopener noreferrer" style={{ color: '#228BE6' }}>MOM 2023</a>)<br />
-                            IN: $3,900 (<a href="https://www.timedoctor.com/blog/average-salary-in-india/" target="_blank" rel="noopener noreferrer" style={{ color: '#228BE6' }}>TimeDoctor 2023</a>)
+                            Current market factors affecting property prices:
+                            - Interest rates affect mortgage affordability
+                            - Market growth rate indicates appreciation potential
+                            - Inflation affects real property value over time
                           </Text>
                         </Popover.Dropdown>
                       </Popover>
                     </Group>
-                    <Stack >
+                    <Stack>
                       <Box>
-                        <Text size="xs" mb={8}>US: ${modelConfig.medianSalary.US.toLocaleString()}</Text>
+                        <Text size="xs" mb={8}>Interest Rate: {modelConfig.propertyMarketFactors.interestRate.toFixed(1)}%</Text>
                         <Slider
-                          value={modelConfig.medianSalary.US}
+                          value={modelConfig.propertyMarketFactors.interestRate}
                           onChange={(val) => setModelConfig(prev => ({
                             ...prev,
-                            medianSalary: { ...prev.medianSalary, US: val }
+                            propertyMarketFactors: { ...prev.propertyMarketFactors, interestRate: val }
                           }))}
                           min={0}
-                          max={100000}
-                          step={1000}
-                          label={(value) => `$${value.toLocaleString()}`}
+                          max={10}
+                          step={0.1}
+                          label={(value) => `${value.toFixed(1)}%`}
                         />
                       </Box>
                       <Box>
-                        <Text size="xs" mb={8}>SG: ${modelConfig.medianSalary.SG.toLocaleString()}</Text>
+                        <Text size="xs" mb={8}>Market Growth: {modelConfig.propertyMarketFactors.marketGrowth.toFixed(1)}%</Text>
                         <Slider
-                          value={modelConfig.medianSalary.SG}
+                          value={modelConfig.propertyMarketFactors.marketGrowth}
                           onChange={(val) => setModelConfig(prev => ({
                             ...prev,
-                            medianSalary: { ...prev.medianSalary, SG: val }
+                            propertyMarketFactors: { ...prev.propertyMarketFactors, marketGrowth: val }
                           }))}
-                          min={0}
-                          max={100000}
-                          step={1000}
-                          label={(value) => `$${value.toLocaleString()}`}
+                          min={-5}
+                          max={10}
+                          step={0.1}
+                          label={(value) => `${value.toFixed(1)}%`}
                         />
                       </Box>
                       <Box>
-                        <Text size="xs" mb={8}>IN: ${modelConfig.medianSalary.IN.toLocaleString()}</Text>
+                        <Text size="xs" mb={8}>Inflation Rate: {modelConfig.propertyMarketFactors.inflationRate.toFixed(1)}%</Text>
                         <Slider
-                          value={modelConfig.medianSalary.IN}
+                          value={modelConfig.propertyMarketFactors.inflationRate}
                           onChange={(val) => setModelConfig(prev => ({
                             ...prev,
-                            medianSalary: { ...prev.medianSalary, IN: val }
+                            propertyMarketFactors: { ...prev.propertyMarketFactors, inflationRate: val }
                           }))}
                           min={0}
-                          max={100000}
-                          step={1000}
-                          label={(value) => `$${value.toLocaleString()}`}
+                          max={10}
+                          step={0.1}
+                          label={(value) => `${value.toFixed(1)}%`}
                         />
                       </Box>
                     </Stack>
@@ -252,71 +252,71 @@ Feel free to ask any questions!`,
 
                   <Box>
                     <Group gap={4}>
-                      <Text size="sm" fw={500}>Cost of Living (USD/year)</Text>
+                      <Text size="sm" fw={500}>Location Value Factors (%)</Text>
                       <Popover width={280} position="bottom" shadow="md">
                         <Popover.Target>
                           <IconInfoCircle size={16} style={{ color: 'gray', cursor: 'pointer' }} />
                         </Popover.Target>
                         <Popover.Dropdown>
                           <Text size="sm">
-                            Based on monthly living costs (Numbeo 2024):<br />
-                            US: $13,998/year (<a href="https://www.numbeo.com/cost-of-living/country_result.jsp?country=United+States" target="_blank" rel="noopener noreferrer" style={{ color: '#228BE6' }}>source</a>)<br />
-                            SG: $13,576/year (<a href="https://www.numbeo.com/cost-of-living/in/Singapore" target="_blank" rel="noopener noreferrer" style={{ color: '#228BE6' }}>source</a>)<br />
-                            IN: $4,015/year (<a href="https://www.numbeo.com/cost-of-living/country_result.jsp?country=India&displayCurrency=USD" target="_blank" rel="noopener noreferrer" style={{ color: '#228BE6' }}>source</a>)
+                            These factors represent how much location type affects property value:
+                            - Urban Premium: Added value for city properties (%)
+                            - Suburban Discount: Value reduction for suburban areas (%)
+                            - Rural Discount: Value reduction for rural properties (%)
                           </Text>
                         </Popover.Dropdown>
                       </Popover>
                     </Group>
                     <Stack>
                       <Box>
-                        <Text size="xs" mb={8}>US: ${modelConfig.costOfLiving.US.toLocaleString()}</Text>
+                        <Text size="xs" mb={8}>Urban Premium: {modelConfig.locationFactors.urbanPremium}%</Text>
                         <Slider
-                          value={modelConfig.costOfLiving.US}
+                          value={modelConfig.locationFactors.urbanPremium}
                           onChange={(val) => setModelConfig(prev => ({
                             ...prev,
-                            costOfLiving: { ...prev.costOfLiving, US: val }
+                            locationFactors: { ...prev.locationFactors, urbanPremium: val }
                           }))}
                           min={0}
-                          max={20000}
-                          step={100}
-                          label={(value) => `$${value.toLocaleString()}`}
+                          max={50}
+                          step={1}
+                          label={(value) => `${value}%`}
                         />
                       </Box>
                       <Box>
-                        <Text size="xs" mb={8}>SG: ${modelConfig.costOfLiving.SG.toLocaleString()}</Text>
+                        <Text size="xs" mb={8}>Suburban Discount: {modelConfig.locationFactors.suburbanDiscount}%</Text>
                         <Slider
-                          value={modelConfig.costOfLiving.SG}
+                          value={modelConfig.locationFactors.suburbanDiscount}
                           onChange={(val) => setModelConfig(prev => ({
                             ...prev,
-                            costOfLiving: { ...prev.costOfLiving, SG: val }
+                            locationFactors: { ...prev.locationFactors, suburbanDiscount: val }
                           }))}
                           min={0}
-                          max={20000}
-                          step={100}
-                          label={(value) => `$${value.toLocaleString()}`}
+                          max={50}
+                          step={1}
+                          label={(value) => `${value}%`}
                         />
                       </Box>
                       <Box>
-                        <Text size="xs" mb={8}>IN: ${modelConfig.costOfLiving.IN.toLocaleString()}</Text>
+                        <Text size="xs" mb={8}>Rural Discount: {modelConfig.locationFactors.ruralDiscount}%</Text>
                         <Slider
-                          value={modelConfig.costOfLiving.IN}
+                          value={modelConfig.locationFactors.ruralDiscount}
                           onChange={(val) => setModelConfig(prev => ({
                             ...prev,
-                            costOfLiving: { ...prev.costOfLiving, IN: val }
+                            locationFactors: { ...prev.locationFactors, ruralDiscount: val }
                           }))}
                           min={0}
-                          max={20000}
-                          step={100}
-                          label={(value) => `$${value.toLocaleString()}`}
+                          max={50}
+                          step={1}
+                          label={(value) => `${value}%`}
                         />
                       </Box>
                     </Stack>
                   </Box>
                 </Stack>
-              </Popover.Dropdown >
-            </Popover >
-          </Group >
-        </Title >
+              </Popover.Dropdown>
+            </Popover>
+          </Group>
+        </Title>
 
         <ScrollArea
           ref={scrollAreaRef}
@@ -384,7 +384,7 @@ Feel free to ask any questions!`,
         <form onSubmit={handleSubmit} style={{ marginTop: 'auto' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
             <TextInput
-              placeholder="Ask me anything about the salary prediction..."
+              placeholder="Ask me anything about the property prediction..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               style={{ flex: 1 }}
@@ -415,7 +415,8 @@ Feel free to ask any questions!`,
             </Button>
           </div>
         </form>
-      </Stack >
-    </Paper >
+      </Stack>
+    </Paper>
   );
 }
+

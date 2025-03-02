@@ -1,20 +1,23 @@
+
 "use client"
 
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
   Collapse,
   Grid,
   Group,
-  MultiSelect,
+  NumberInput,
   Paper,
   Progress,
   Select,
+  Slider,
   Stack,
+  Switch,
   Text,
   TextInput,
-  Textarea,
   Title,
   Tooltip
 } from '@mantine/core';
@@ -25,11 +28,13 @@ import "driver.js/dist/driver.css";
 import { CheckCircle2, HelpCircle, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import "./driver.css";
+import { predictPropertyPrice } from './actions';
+import Chat from './Chat'; // Import the Chat component
 
-interface FormLabelProps {
-  label: string;
-  tooltip: string;
-}
+import propertyTypes from './ts-data/propertyTypes';
+import sellingMethods from './ts-data/sellingMethods';
+import suburbs from './ts-data/suburbs';
+import sellers from './ts-data/sellers';
 
 interface FormLabelProps {
   label: string;
@@ -59,11 +64,73 @@ function FormLabel({ label, tooltip, style }: FormLabelProps) {
   );
 }
 
-import { predictSalary } from './actions';
-import Chat from './Chat';
-import { formTooltips, jobPresets } from './presets';
+// Property form tooltips
+const propertyTooltips = {
+  suburb: "The name of the suburb where the property is located.",
+  rooms: "Number of rooms in the property.",
+  type: "Type of property (House, Unit, Townhouse, etc.).",
+  method: "Method of sale (S = property sold; SP = property sold prior; PI = property passed in; PN = sold prior not disclosed; SN = sold not disclosed; NB = no bid; VB = vendor bid; W = withdrawn prior to auction; SA = sold after auction; SS = sold after auction price not disclosed).",
+  seller: "Real estate company handling the sale.",
+  distance: "Distance from CBD in kilometers.",
+  bathroom: "Number of bathrooms in the property.",
+  car: "Number of car spaces.",
+  landsize: "Land size in square meters.",
+  buildingArea: "Building area in square meters.",
+  propertyAge: "Age of the property in years.",
+  direction: "Direction the property faces (N, S, E, W, NE, NW, SE, SW).",
+  landSizeNotOwned: "Whether part of the land size is not owned by the property (e.g., shared driveways)."
+};
 
-export default function SalaryForm() {
+// Property presets
+const propertyPresets = {
+  suburban_house: {
+    suburb: "Reservoir",
+    rooms: 3,
+    type: "h",
+    method: "S",
+    seller: "Ray",
+    distance: 11.2,
+    bathroom: 1.0,
+    car: 2,
+    landsize: 556.0,
+    buildingArea: 120.0,
+    propertyAge: 50,
+    direction: "N",
+    landSizeNotOwned: false
+  },
+  inner_city_apartment: {
+    suburb: "Melbourne",
+    rooms: 2,
+    type: "u",
+    method: "SP",
+    seller: "Nelson",
+    distance: 5.8,
+    bathroom: 1.0,
+    car: 1,
+    landsize: 1,
+    buildingArea: 75.0,
+    propertyAge: 15,
+    direction: "E",
+    landSizeNotOwned: true
+  },
+  luxury_house: {
+    suburb: "Toorak",
+    rooms: 5,
+    type: "h",
+    method: "S",
+    seller: "RT Edgar",
+    distance: 7.6,
+    bathroom: 3.5,
+    car: 4,
+    landsize: 850.0,
+    buildingArea: 320.0,
+    propertyAge: 25,
+    direction: "N",
+    landSizeNotOwned: false
+  }
+};
+
+export default function PropertyPriceForm() {
   const driverObj = React.useRef(
     driver({
       showProgress: true,
@@ -74,8 +141,8 @@ export default function SalaryForm() {
       steps: [
         {
           popover: {
-            title: 'Welcome to Salary Predictor!',
-            description: 'Hello, I\'m Wei Heng, the creator of this tool. Let me show you around our salary prediction tool. \
+            title: 'Welcome to Property Price Predictor!',
+            description: 'This tool will help you predict property prices based on various features of the property. \
             \n\nIf you don\'t want to go through this tour, click the "x" button on the top-right. \
             \n\nOtherwise, let\'s quickly make a prediction to show you around. \
             ',
@@ -91,10 +158,10 @@ export default function SalaryForm() {
         {
           element: '#preset-selector',
           popover: {
-            title: 'Job Presets',
-            description: 'Start by selecting a job preset. \
+            title: 'Property Presets',
+            description: 'Start by selecting a property preset. \
             \n\nThis can make it easy for you to try out our model. \
-            \n\n You can create your own custom profile, but let\'s proceed with any of the presets. \
+            \n\n You can create your own custom property profile, but let\'s proceed with any of the presets. \
             \n\nClick "Next" to continue.',
             side: "top",
             align: 'start'
@@ -103,23 +170,11 @@ export default function SalaryForm() {
         {
           element: '#form-section',
           popover: {
-            title: 'Job Details',
-            description: 'The purpose of this tool is to accurately and quickly predict salaries across countries and locations. \
-            \n\nThe fields over here are what the model needs to make an informed prediction. \
-            \n\nOur model generally makes predictions within 20KUSD/year of error, so it\'s advisable that this is the tolerance you provide.',
+            title: 'Property Details',
+            description: 'The purpose of this tool is to accurately and quickly predict property prices based on property features. \
+            \n\nThe fields here are what the model needs to make an informed prediction. \
+            \n\nOur model generally makes predictions within a reasonable margin of error based on historical sales data.',
             side: "left",
-            align: 'start'
-          }
-        },
-        {
-          element: '#countries-select',
-          popover: {
-            title: 'Select Countries',
-            description: 'The fields here are special. \
-            \n\nThese fields are not only understood by our model, but also are looped as individual predictions.\
-            \n\nThis means that you will receive 3 predictions if you chose all these countries, where each prediction is the respective country.\
-            \n\nSame applies to the locations, where you will receive multiple predictions for each of your chosen multiple locations.\ ',
-            side: "top",
             align: 'start'
           }
         },
@@ -128,7 +183,7 @@ export default function SalaryForm() {
           popover: {
             title: 'Submit your predictions',
             description: 'Go ahead and submit your prediction. \
-            \n\nLet\'s see what the predictions made by our model!.',
+            \n\nLet\'s see what the prediction made by our model!.',
             side: "top",
             align: 'start',
             disableButtons: ['next']
@@ -141,67 +196,68 @@ export default function SalaryForm() {
   interface SavedPrediction {
     name: string;
     timestamp: number;
-    predictions: {
-      [key: string]: {
-        salary: number | null;
-        duration: number;
-        relativeDuration: number;
-      };
-    };
+    predictedPrice: number | null;
+    duration: number;
     formValues: FormValues;
   }
 
   interface FormValues {
-    job_title: string;
-    job_description: string;
-    contract_type: string;
-    education_level: string;
-    seniority: string;
-    min_years_experience: string;
-    countries: string[];
-    location_us: string[];
-    location_in: string[];
+    suburb: string;
+    rooms: number | null;
+    type: string;
+    method: string;
+    seller: string;
+    distance: number | null;
+    bathroom: number | null;
+    car: number | null;
+    landsize: number | null;
+    buildingArea: number | null;
+    propertyAge: number | null;
+    direction: string;
+    landSizeNotOwned: boolean;
   }
-
 
   const form = useForm<FormValues>({
     initialValues: {
-      job_title: '',
-      job_description: '',
-      contract_type: '',
-      education_level: '',
-      seniority: '',
-      min_years_experience: '',
-      countries: ['US', 'SG', 'IN'],
-      location_us: [],
-      location_in: [],
+      suburb: '',
+      rooms: null,
+      type: '',
+      method: '',
+      seller: '',
+      distance: null,
+      bathroom: null,
+      car: null,
+      landsize: null,
+      buildingArea: null,
+      propertyAge: null,
+      direction: '',
+      landSizeNotOwned: false,
     },
     validate: {
-      countries: (value) => value.length === 0 ? 'Please select at least one country' : null,
+      suburb: (value) => !value ? 'Suburb is required' : null,
+      rooms: (value) => value === null ? 'Number of rooms is required' : null,
     },
     validateInputOnChange: true,
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState('software_engineer');
+  const [selectedPreset, setSelectedPreset] = useState('suburban_house');
   const [formExpanded, setFormExpanded] = useState(true);
   const [showTour, setShowTour] = useState(true);
 
-
-  const [predictions, setPredictions] = useState<{ [key: string]: { salary: number | null; duration: number; relativeDuration: number } }>({});
+  const [predictedPrice, setPredictedPrice] = useState<number | null>(null);
+  const [duration, setDuration] = useState<number>(0);
   const [lastPredictionTime, setLastPredictionTime] = useState<number | null>(null);
-  const [lastEndTime, setLastEndTime] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedPredictions, setSavedPredictions] = useState<SavedPrediction[]>([]);
   const [savePredictionName, setSavePredictionName] = useState('');
-  const [progress, setProgress] = useState({ completed: 0, total: 0 });
+  const [progress, setProgress] = useState({ completed: 0, total: 1 });
   const [timer, setTimer] = useState(0);
   const [showProgress, setShowProgress] = useState(false);
-  const [triggerAnalysis, setTriggerAnalysis] = useState(false);
+  const [triggerAnalysis, setTriggerAnalysis] = useState(false); // Added state for triggering AI analysis
   const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = React.useRef<number>(0);
   const fadeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
 
   useEffect(() => {
     const tourSkipped = localStorage.getItem('tourSkipped');
@@ -241,99 +297,51 @@ export default function SalaryForm() {
 
     setIsLoading(true);
     setError(null);
-    setPredictions({});
+    setPredictedPrice(null);
     setFormExpanded(false);
     setLastPredictionTime(null);
-    setLastEndTime(null);
-    setProgress({ completed: 0, total: 0 });
+    setProgress({ completed: 0, total: 1 });
     setTimer(0);
     clearCurrentInterval();
+    setTriggerAnalysis(false); // Reset trigger analysis
 
-    console.log("handleSubmit started");
-
-    // Create a queue of all predictions we need to make
-    const predictionQueue: { country: string; location: string }[] = [];
-
-    for (const country_code of values.countries) {
-      const locationKey = `location_${country_code.toLowerCase()}` as keyof typeof values;
-      // Ensure locations is an array, default to empty array if undefined
-      const locations = (values[locationKey] as string[]) || [];
-
-      if (locations.length === 0) {
-        predictionQueue.push({ country: country_code, location: '' });
-      } else {
-        for (const location of locations) {
-          predictionQueue.push({ country: country_code, location });
-        }
-      }
-    }
-
-    setProgress({ completed: 0, total: predictionQueue.length });
+    setProgress({ completed: 0, total: 1 });
     setShowProgress(true);
-    let completedPredictions = 0;
-    const totalPredictions = predictionQueue.length;
 
-    // Process predictions sequentially
-    for (const { country, location } of predictionQueue) {
-      // Reset and start timer for each prediction
-      startTimer();
+    // Start timer for the prediction
+    startTimer();
 
-      const payload = {
-        job_title: values.job_title,
-        job_description: values.job_description,
-        contract_type: values.contract_type,
-        education_level: values.education_level,
-        seniority: values.seniority,
-        min_years_experience: values.min_years_experience,
-        location_us: values.location_us,
-        location_in: values.location_in,
-      };
+    try {
+      const startTime = performance.now();
+      const result = await predictPropertyPrice(values);
+      const endTime = performance.now();
+      const durationTime = endTime - startTime;
+      console.log('API Response:', result);
+      setDuration(durationTime);
+      clearCurrentInterval();
+      setProgress({ completed: 1, total: 1 });
 
-      const predictionKey = location ? `${country}-${location}` : country;
-      console.log(`Fetching prediction for ${predictionKey}`);
-
-      try {
-        const startTime = performance.now();
-        const result = await predictSalary(payload, country, location);
-        const endTime = performance.now();
-        const duration = endTime - startTime;
-        const relativeDuration = lastEndTime ? startTime - lastEndTime : duration;
-        setLastEndTime(endTime);
-        clearCurrentInterval();
-        completedPredictions++;
-        setProgress(prev => ({ ...prev, completed: completedPredictions }));
-
-        if (result.success && result.data) {
-          setPredictions(prev => ({
-            ...prev,
-            [predictionKey]: {
-              salary: result.data.predicted_salary,
-              duration: duration,
-              relativeDuration: relativeDuration
-            }
-          }));
-        } else {
-          setError(prev => prev || result.error || 'Failed to predict salary');
-          notifications.show({
-            title: 'Prediction Failed',
-            message: `Failed for ${predictionKey}: ${result.error}`,
-            color: 'red',
-            icon: <XCircle size={18} />,
-          });
-        }
-      } catch (error) {
-        console.error(`Error predicting for ${predictionKey}:`, error);
+      if (result.success && result.data) {
+        setPredictedPrice(result.data.prediction);
+        setTriggerAnalysis(true); // Trigger AI analysis when prediction succeeds
+        notifications.show({
+          title: 'Prediction Complete',
+          message: 'Successfully predicted property price',
+          color: 'green',
+          icon: <CheckCircle2 size={18} />,
+        });
+      } else {
+        setError(result.error || 'Failed to predict property price');
+        notifications.show({
+          title: 'Prediction Failed',
+          message: result.error || 'An error occurred',
+          color: 'red',
+          icon: <XCircle size={18} />,
+        });
       }
-    }
-
-    if (completedPredictions === totalPredictions) {
-      notifications.show({
-        title: 'All Predictions Complete',
-        message: `Successfully processed ${completedPredictions} predictions`,
-        color: 'green',
-        icon: <CheckCircle2 size={18} />,
-      });
-      setTriggerAnalysis(true);
+    } catch (error) {
+      console.error('Error predicting property price:', error);
+      setError('An unexpected error occurred');
     }
 
     clearCurrentInterval();
@@ -346,20 +354,17 @@ export default function SalaryForm() {
     fadeTimeoutRef.current = setTimeout(() => {
       setShowProgress(false);
     }, 1000);
-
-    console.log("handleSubmit finished");
   };
-
 
   // Set initial preset values when component mounts
   // Load saved predictions from localStorage
   React.useEffect(() => {
-    const saved = localStorage.getItem('savedPredictions');
+    const saved = localStorage.getItem('savedPropertyPredictions');
     if (saved) {
       setSavedPredictions(JSON.parse(saved));
     }
-    if (jobPresets.software_engineer) {
-      form.setValues(jobPresets.software_engineer);
+    if (propertyPresets.suburban_house) {
+      form.setValues(propertyPresets.suburban_house);
     }
   }, []);
 
@@ -376,9 +381,9 @@ export default function SalaryForm() {
   return (
     <Paper shadow="xs" p="md" style={{ height: '100%' }}>
       <Grid>
-        <Grid.Col span={Object.keys(predictions).length > 0 ? { base: 12, md: 6 } : 12} style={{ minHeight: 0 }}>
+        <Grid.Col span={predictedPrice ? { base: 12, md: 6 } : 12} style={{ minHeight: 0 }}>
           <Group justify="space-between" mb="md">
-            <Title order={3} id="welcome-message">Salary Prediction Form</Title>
+            <Title order={3} id="welcome-message">Property Price Prediction Form</Title>
             <Button
               variant="subtle"
               size="xs"
@@ -388,80 +393,97 @@ export default function SalaryForm() {
             </Button>
           </Group>
 
+
           <Collapse in={!isLoading && formExpanded} transitionDuration={200} id="preset-selector">
             <Stack gap="xs">
               <Group mb="md">
-                <Button
-                  variant={selectedPreset === 'software_engineer' ? 'filled' : 'light'}
-                  onClick={() => {
-                    setSelectedPreset('software_engineer');
-                    form.setValues(jobPresets.software_engineer);
-                  }}
-                  size="sm"
-                >
-                  Software Engineer
-                </Button>
-                <Button
-                  variant={selectedPreset === 'data_scientist' ? 'filled' : 'light'}
-                  onClick={() => {
-                    setSelectedPreset('data_scientist');
-                    form.setValues(jobPresets.data_scientist);
-                  }}
-                  size="sm"
-                >
-                  Data Scientist
-                </Button>
-                <Button
-                  variant={selectedPreset === 'product_manager' ? 'filled' : 'light'}
-                  onClick={() => {
-                    setSelectedPreset('product_manager');
-                    form.setValues(jobPresets.product_manager);
-                  }}
-                  size="sm"
-                >
-                  Product Manager
-                </Button>
-                <Box style={{}}>
-                  <Tooltip
-                    label={
-                      <img
-                        src="/Senior Lecturer.png"
-                        alt="Senior Lecturer Preview"
-                        style={{
-                          maxWidth: '500px',
-                          height: 'auto'
-                        }}
-                      />
-                    }
-                    position="bottom"
-                    transitionProps={{ transition: 'pop' }}
-                  >
-                    <Button
-                      variant={selectedPreset === 'senior_lecturer' ? 'filled' : 'light'}
-                      onClick={() => {
-                        setSelectedPreset('senior_lecturer');
-                        form.setValues(jobPresets.senior_lecturer);
+                <Tooltip
+                  label={
+                    <img
+                      src="/suburban.jpg"
+                      alt="Suburban Preview"
+                      style={{
+                        maxWidth: '500px',
+                        height: 'auto'
                       }}
-                      size="sm"
-                    >
-                      Senior Lecturer
-                      <Box
-                        style={{
-                          background: 'red',
-                          color: 'white',
-                          padding: '2px 6px',
-                          borderRadius: '10px',
-                          fontSize: '10px',
-                          position: 'absolute',
-                          top: '0',
-                          right: '0'
-                        }}
-                      >
-                        New!
-                      </Box>
-                    </Button>
-                  </Tooltip>
-                </Box>
+                    />
+                  }
+                  position="bottom"
+                  transitionProps={{ transition: 'pop' }}
+                >
+                  <Button
+                    variant={selectedPreset === 'suburban_house' ? 'filled' : 'light'}
+                    onClick={() => {
+                      setSelectedPreset('suburban_house');
+                      form.setValues(propertyPresets.suburban_house);
+                    }}
+                    size="sm"
+                    leftSection={<span style={{ fontSize: '18px' }}>🏡</span>}
+                    className="preset-button"
+                  >
+                    Suburban House
+                  </Button>
+                </Tooltip>
+
+                {/* Inner City Apartment Button */}
+                <Tooltip
+                  label={
+                    <img
+                      src="/apartment.jpg"
+                      alt="Apartment Preview"
+                      style={{
+                        maxWidth: '500px',
+                        height: 'auto'
+                      }}
+                    />
+                  }
+                  position="bottom"
+                  transitionProps={{ transition: 'pop' }}
+                >
+                  <Button
+                    variant={selectedPreset === 'inner_city_apartment' ? 'filled' : 'light'}
+                    onClick={() => {
+                      setSelectedPreset('inner_city_apartment');
+                      form.setValues(propertyPresets.inner_city_apartment);
+                    }}
+                    size="sm"
+                    leftSection={<span style={{ fontSize: '18px' }}>🏢</span>}
+                    className="preset-button"
+                  >
+                    Inner City Apartment
+                  </Button>
+                </Tooltip>
+
+                {/* Luxury House Button */}
+                <Tooltip
+                  label={
+                    <img
+                      src="/luxury.jpg"
+                      alt="Luxury Preview"
+                      style={{
+                        maxWidth: '500px',
+                        height: 'auto'
+                      }}
+                    />
+                  }
+                  position="bottom"
+                  transitionProps={{ transition: 'pop' }}
+                >
+                  <Button
+                    variant={selectedPreset === 'luxury_house' ? 'filled' : 'light'}
+                    onClick={() => {
+                      setSelectedPreset('luxury_house');
+                      form.setValues(propertyPresets.luxury_house);
+                    }}
+                    size="sm"
+                    leftSection={<span style={{ fontSize: '18px' }}>🏰</span>}
+                    className="preset-button"
+                  >
+                    Luxury House
+                  </Button>
+                </Tooltip>
+
+                {/* Clear Button */}
                 <Button
                   variant="subtle"
                   color="gray"
@@ -470,6 +492,7 @@ export default function SalaryForm() {
                     form.reset();
                   }}
                   size="sm"
+                  leftSection={<span style={{ fontSize: '18px' }}>🧹</span>}
                 >
                   Clear
                 </Button>
@@ -477,196 +500,257 @@ export default function SalaryForm() {
             </Stack>
           </Collapse>
 
+
           <form onSubmit={form.onSubmit(handleSubmit)} style={{ marginTop: formExpanded ? 0 : '1rem' }}>
             <Card withBorder shadow="sm" style={{ overflow: 'hidden' }}>
               <Stack gap="md">
                 <Collapse in={formExpanded} transitionDuration={200} id="form-section">
                   <Grid style={{ minHeight: 0 }}>
                     <Grid.Col span={12}>
-                      <TextInput
-                        label={
-                          <FormLabel label="Job Title" tooltip={formTooltips.query} />
-                        }
-                        placeholder="Enter job title"
-                        {...form.getInputProps('job_title')}
+                      <Select
+                        label={<FormLabel label="🏙️ Suburb" tooltip={propertyTooltips.suburb} />}
+                        placeholder="Select suburb"
+                        data={suburbs.map(suburb => ({ value: suburb, label: suburb }))}
+                        searchable
+                        maxDropdownHeight={280}
+                        {...form.getInputProps('suburb')}
                       />
                     </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <Select
+                        label={<FormLabel label="🧭 Direction" tooltip={propertyTooltips.direction} />}
+                        placeholder="Select direction"
+                        data={[
+                          { value: 'N', label: 'North' },
+                          { value: 'S', label: 'South' },
+                          { value: 'E', label: 'East' },
+                          { value: 'W', label: 'West' },
+                        ]}
+                        {...form.getInputProps('direction')}
+                      />
+                    </Grid.Col>
+
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <Select
+                        label={<FormLabel label="🏠 Type" tooltip={propertyTooltips.type} />}
+                        placeholder="Select property type"
+                        data={propertyTypes.map(method => {
+                          const labels = {
+                            'h': 'House',
+                            't': 'Town',
+                            'u': 'Unit/Appartment',
+                          };
+                          return { value: method, label: labels[method] || method };
+                        })}
+                        {...form.getInputProps('type')}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <Select
+                        label={<FormLabel label="🔨 Sale Method" tooltip={propertyTooltips.method} />}
+                        placeholder="Select sale method"
+                        data={sellingMethods.map(method => {
+                          const labels = {
+                            'S': 'Sold',
+                            'SP': 'Sold Prior',
+                            'PI': 'Passed In',
+                            "SA": "Sold after auction",
+                            "VB": "Vendor bid",
+                          };
+                          return { value: method, label: labels[method] || method };
+                        })}
+                        {...form.getInputProps('method')}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <Autocomplete
+                        label={<FormLabel label="🏢 Seller" tooltip={propertyTooltips.seller} />}
+                        placeholder="Real estate agency"
+                        data={sellers}
+                        {...form.getInputProps('seller')}
+                      />
+                    </Grid.Col>
+
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="🛏️ Rooms"
+                        tooltip={propertyTooltips.rooms}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        label={(value) => `${value} rooms`}
+                        marks={[
+                          { value: 1, label: '1' },
+                          { value: 3, label: '3' },
+                          { value: 5, label: '5' },
+                          { value: 7, label: '7' },
+                          { value: 10, label: '10' }
+                        ]}
+                        value={form.values.rooms || 1}
+                        onChange={(val) => form.setFieldValue('rooms', val)}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="🚗 Distance from CBD (km)"
+                        tooltip={propertyTooltips.distance}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        min={0}
+                        max={50}
+                        step={1}
+                        label={(value) => `${value} km`}
+                        marks={[
+                          { value: 0, label: '0' },
+                          { value: 10, label: '10' },
+                          { value: 20, label: '20' },
+                          { value: 30, label: '30' },
+                          { value: 40, label: '40' },
+                          { value: 50, label: '50' },
+                        ]}
+                        value={form.values.distance || 0}
+                        onChange={(val) => form.setFieldValue('distance', val)}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="🚿 Bathrooms"
+                        tooltip={propertyTooltips.bathroom}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        min={1}
+                        max={5}
+                        step={1}
+                        label={(value) => `${value} ${value === 1 ? 'bathroom' : 'bathrooms'}`}
+                        marks={[
+                          { value: 1, label: '1' },
+                          { value: 2, label: '2' },
+                          { value: 3, label: '3' },
+                          { value: 4, label: '4' },
+                          { value: 5, label: '5' },
+                        ]}
+                        value={form.values.bathroom || 0}
+                        onChange={(val) => form.setFieldValue('bathroom', val)}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="🅿️ Car Spaces"
+                        tooltip={propertyTooltips.car}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        min={0}
+                        max={5}
+                        step={1}
+                        label={(value) => `${value} ${value === 1 ? 'space' : 'spaces'}`}
+                        marks={[
+                          { value: 0, label: '0' },
+                          { value: 1, label: '1' },
+                          { value: 2, label: '2' },
+                          { value: 3, label: '3' },
+                          { value: 4, label: '4' },
+                          { value: 5, label: '5' },
+                        ]}
+                        value={form.values.car || 0}
+                        onChange={(val) => form.setFieldValue('car', val)}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="📏 Land Size (m²)"
+                        tooltip={propertyTooltips.landsize}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        min={10}
+                        max={2000}
+                        step={10}
+                        label={(value) => `${value} m²`}
+                        marks={[
+                          { value: 10, label: '10' },
+                          { value: 500, label: '500' },
+                          { value: 1000, label: '1000' },
+                          { value: 1500, label: '1500' },
+                          { value: 2000, label: '2000' },
+                        ]}
+                        value={form.values.landsize || 0}
+                        onChange={(val) => form.setFieldValue('landsize', val)}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="🏗️ Building Area (m²)"
+                        tooltip={propertyTooltips.buildingArea}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        min={0}
+                        max={500}
+                        step={10}
+                        label={(value) => `${value} m²`}
+                        marks={[
+                          { value: 0, label: '0' },
+                          { value: 100, label: '100' },
+                          { value: 200, label: '200' },
+                          { value: 300, label: '300' },
+                          { value: 400, label: '400' },
+                          { value: 500, label: '500' },
+                        ]}
+                        value={form.values.buildingArea || 0}
+                        onChange={(val) => form.setFieldValue('buildingArea', val)}
+                      />
+                    </Grid.Col>
+
+                    <Grid.Col span={6} style={{ minHeight: '90px' }}>
+                      <FormLabel
+                        label="📅 Property Age (years)"
+                        tooltip={propertyTooltips.propertyAge}
+                        style={{ color: 'var(--foreground)', marginBottom: '10px' }}
+                      />
+                      <Slider
+                        id="property-age"
+                        min={0}
+                        max={100}
+                        step={1}
+                        label={(value) => `${value} years`}
+                        marks={[
+                          { value: 0, label: 'New' },
+                          { value: 25, label: '25y' },
+                          { value: 50, label: '50y' },
+                          { value: 75, label: '75y' },
+                          { value: 100, label: '100y+' },
+                        ]}
+                        value={form.values.propertyAge || 0}
+                        onChange={(val) => form.setFieldValue('propertyAge', val)}
+                      />
+                    </Grid.Col>
+
 
                     <Grid.Col span={12}>
-                      <Textarea
-                        label={<FormLabel label="Job Description" tooltip={formTooltips.job_description} />}
-                        placeholder="Enter job description"
-                        minRows={2}
-                        maxRows={10}
-                        autosize
-                        {...form.getInputProps('job_description')}
+                      <Switch
+                        label={<FormLabel label="⚠️ Land Size Not Fully Owned" tooltip={propertyTooltips.landSizeNotOwned} />}
+                        {...form.getInputProps('landSizeNotOwned', { type: 'checkbox' })}
                       />
                     </Grid.Col>
-
-
-
-                    <Grid.Col span={6}>
-                      <Select
-                        label={<FormLabel label="Contract Type" tooltip={formTooltips.contract_type} />}
-                        placeholder="Select contract type"
-                        data={[
-                          { value: 'Full-time', label: 'Full Time' },
-                          { value: 'Part-time', label: 'Part Time' },
-                          { value: 'Contract', label: 'Contract' },
-                        ]}
-                        {...form.getInputProps('contract_type')}
-                      />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                      <Select
-                        label={<FormLabel label="Education Level" tooltip={formTooltips.education_level} />}
-                        placeholder="Select education level"
-                        data={[
-                          { value: "Bachelor's", label: "Bachelor's Degree" },
-                          { value: "Master's", label: "Master's Degree" },
-                          { value: 'PhD', label: 'PhD' },
-                        ]}
-                        {...form.getInputProps('education_level')}
-                      />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                      <Select
-                        label={<FormLabel label="Seniority" tooltip={formTooltips.seniority} />}
-                        placeholder="Select seniority level"
-                        data={[
-                          { value: 'Entry', label: 'Entry Level' },
-                          { value: 'Mid', label: 'Mid Level' },
-                          { value: 'Senior', label: 'Senior Level' },
-                          { value: 'Lead', label: 'Lead' },
-                        ]}
-                        {...form.getInputProps('seniority')}
-                      />
-                    </Grid.Col>
-
-                    <Grid.Col span={6}>
-                      <TextInput
-                        label={<FormLabel label="Minimum Years of Experience" tooltip={formTooltips.min_years_experience} />}
-                        placeholder="Enter years of experience"
-                        {...form.getInputProps('min_years_experience')}
-                      />
-                    </Grid.Col>
-                    <Box w="100%" id="countries-select">
-                      <Grid.Col span={12} >
-                        <FormLabel
-                          label="Countries"
-                          tooltip={formTooltips.countries}
-                          style={{
-                            fontSize: 'var(--mantine-font-size-sm)',
-                            fontWeight: 500,
-                            marginBottom: '0.25rem'
-                          }}
-                        />
-                        <Group>
-                          <Button
-                            variant={form.values.countries.includes('US') ? 'filled' : 'light'}
-                            onClick={() => {
-                              const newCountries = form.values.countries.includes('US')
-                                ? form.values.countries.filter(c => c !== 'US')
-                                : [...form.values.countries, 'US'];
-                              form.setFieldValue('countries', newCountries);
-                            }}
-                            size="sm"
-                          >
-                            <Text style={{
-                              textDecoration: form.values.countries.includes('US') ? 'none' : 'line-through'
-                            }}>
-                              United States {form.values.countries.includes('US') && '✓'}
-                            </Text>
-                          </Button>
-                          <Button
-                            variant={form.values.countries.includes('SG') ? 'filled' : 'light'}
-                            onClick={() => {
-                              const newCountries = form.values.countries.includes('SG')
-                                ? form.values.countries.filter(c => c !== 'SG')
-                                : [...form.values.countries, 'SG'];
-                              form.setFieldValue('countries', newCountries);
-                            }}
-                            size="sm"
-                          >
-                            <Text style={{
-                              textDecoration: form.values.countries.includes('SG') ? 'none' : 'line-through'
-                            }}>
-                              Singapore {form.values.countries.includes('SG') && '✓'}
-                            </Text>
-                          </Button>
-                          <Button
-                            variant={form.values.countries.includes('IN') ? 'filled' : 'light'}
-                            onClick={() => {
-                              const newCountries = form.values.countries.includes('IN')
-                                ? form.values.countries.filter(c => c !== 'IN')
-                                : [...form.values.countries, 'IN'];
-                              form.setFieldValue('countries', newCountries);
-                            }}
-                            size="sm"
-                          >
-                            <Text style={{
-                              textDecoration: form.values.countries.includes('IN') ? 'none' : 'line-through'
-                            }}>
-                              India {form.values.countries.includes('IN') && '✓'}
-                            </Text>
-                          </Button>
-                        </Group>
-                        {form.errors.countries && (
-                          <Text c="red" size="sm">
-                            {form.errors.countries}
-                          </Text>
-                        )}
-                      </Grid.Col>
-
-                      {form.values.countries.includes('US') && (
-                        <Grid.Col span={12}>
-                          <MultiSelect
-                            label={<FormLabel label="US Locations" tooltip={formTooltips.location_us} />}
-                            placeholder="Select locations in United States"
-                            searchable
-                            clearable
-                            data={[
-                              'New York',
-                              'San Francisco',
-                              'Seattle',
-                              'Austin',
-                              'Boston',
-                              'Los Angeles',
-                              'Chicago',
-                              'Denver',
-                            ]}
-                            {...form.getInputProps('location_us')}
-                          />
-                        </Grid.Col>
-                      )}
-
-                      {form.values.countries.includes('IN') && (
-                        <Grid.Col span={12}>
-                          <MultiSelect
-                            label={<FormLabel label="India Locations" tooltip={formTooltips.location_in} />}
-                            placeholder="Select locations in India"
-                            searchable
-                            clearable
-                            data={[
-                              'Bangalore',
-                              'Mumbai',
-                              'Delhi',
-                              'Hyderabad',
-                              'Chennai',
-                              'Pune',
-                              'Noida',
-                              'Gurgaon',
-                            ]}
-                            {...form.getInputProps('location_in')}
-                          />
-                        </Grid.Col>
-                      )}
-                    </Box>
                   </Grid>
-
                 </Collapse>
+
 
                 <Collapse in={showProgress} transitionDuration={200}>
                   <Stack gap="xs" style={{ transition: 'opacity 0.5s ease-out' }}>
@@ -678,8 +762,8 @@ export default function SalaryForm() {
                     />
                     <Text size="sm" ta="center">
                       {isLoading ?
-                        `Processing ${progress.completed} of ${progress.total} predictions` :
-                        `Completed ${progress.total} predictions`
+                        `Processing prediction...` :
+                        `Prediction completed`
                       }
                     </Text>
                     <Text size="sm" ta="center" c="dimmed">
@@ -687,19 +771,19 @@ export default function SalaryForm() {
                     </Text>
                   </Stack>
                 </Collapse>
-                {Object.keys(predictions).length > 0 ? (
+
+                {predictedPrice ? (
                   <Button
                     onClick={(e) => {
                       e.preventDefault();
-                      setPredictions({});
+                      setPredictedPrice(null);
                       setError(null);
                       setFormExpanded(true);
                       setLastPredictionTime(null);
-                      setLastEndTime(null);
-                      setProgress({ completed: 0, total: 0 });
+                      setProgress({ completed: 0, total: 1 });
                       setTimer(0);
                       setShowProgress(false);
-                      setTriggerAnalysis(false);
+                      setTriggerAnalysis(false); // Reset trigger analysis
                       clearCurrentInterval();
                     }}
                     type="button"
@@ -714,72 +798,31 @@ export default function SalaryForm() {
                     mt="md"
                     loading={isLoading}
                   >
-                    {isLoading ? 'Calculating...' : 'Submit'}
+                    {isLoading ? 'Calculating...' : 'Predict Property Price'}
                   </Button>
                 )}
 
-                {Object.keys(predictions).length > 0 && (
+                {predictedPrice && (
                   <Paper p="md" withBorder>
-                    <Title order={4} mb="md">Predicted Salaries</Title>
-                    <Grid>
-                      {['US', 'SG', 'IN'].filter(country =>
-                        Object.keys(predictions).some(key => key.startsWith(country))
-                      ).map(country => (
-                        <Grid.Col key={country} span={{ base: 12, sm: 6, lg: 4 }}>
-                          <Card withBorder shadow="sm">
-                            <Stack gap="xs">
-                              <Group justify="space-between">
-                                <Stack gap="xs">
-                                  <Title order={5}>
-                                    {country === 'US' ? 'United States' :
-                                      country === 'SG' ? 'Singapore' :
-                                        'India'}
-                                  </Title>
-                                  {predictions[country]?.salary && (
-                                    <Stack gap={0}>
-                                      <Text fw={700} size="lg" c="blue" ta="right">
-                                        ${predictions[country].salary.toLocaleString()}
-                                      </Text>
-                                      <Text size="xs" c="dimmed" ta="left">
-                                        {(predictions[country].relativeDuration / 1000).toFixed(2)}s
-                                      </Text>
-                                    </Stack>
-                                  )}
-                                </Stack>
-                              </Group>
-
-                              {/* Location-specific predictions */}
-                              {Object.entries(predictions)
-                                .filter(([key]) => key.startsWith(country) && key !== country)
-                                .map(([key, data]) => {
-                                  const location = key.split('-')[1];
-                                  return (
-                                    <Card key={key} withBorder p="xs">
-                                      <Stack gap="xs">
-                                        <Text fw={500} size="sm" lineClamp={1}>
-                                          {location}
-                                        </Text>
-                                        <Stack gap={0}>
-                                          <Text fw={700} size="sm">
-                                            ${data.salary?.toLocaleString() ?? 'N/A'}
-                                          </Text>
-                                          <Text size="xs" c="dimmed">
-                                            {(data.relativeDuration / 1000).toFixed(2)}s
-                                          </Text>
-                                        </Stack>
-                                      </Stack>
-                                    </Card>
-                                  );
-                                })}
-                            </Stack>
-                          </Card>
-                        </Grid.Col>
-                      ))}
-                    </Grid>
+                    <Title order={4} mb="md">Predicted Property Price</Title>
+                    <Card withBorder shadow="sm">
+                      <Stack gap="md">
+                        <Text fw={700} size="xl" c="blue" ta="center">
+                          ${predictedPrice.toLocaleString()}
+                        </Text>
+                        <Group >
+                          <Text size="sm">Property: {form.values.suburb} {form.values.type}</Text>
+                          <Text size="sm">{form.values.rooms} rooms, {form.values.bathroom} bathrooms</Text>
+                        </Group>
+                        <Text size="xs" c="dimmed" ta="right">
+                          Calculated in {(duration / 1000).toFixed(2)}s
+                        </Text>
+                      </Stack>
+                    </Card>
                   </Paper>
                 )}
 
-                {Object.keys(predictions).length > 0 && (
+                {predictedPrice && (
                   <Card withBorder>
                     <Stack gap="md">
                       <Title order={4}>Save Prediction</Title>
@@ -804,13 +847,14 @@ export default function SalaryForm() {
                             const newSavedPrediction: SavedPrediction = {
                               name: savePredictionName,
                               timestamp: Date.now(),
-                              predictions,
+                              predictedPrice,
+                              duration,
                               formValues: form.values,
                             };
 
                             const updatedSavedPredictions = [...savedPredictions, newSavedPrediction];
                             setSavedPredictions(updatedSavedPredictions);
-                            localStorage.setItem('savedPredictions', JSON.stringify(updatedSavedPredictions));
+                            localStorage.setItem('savedPropertyPredictions', JSON.stringify(updatedSavedPredictions));
 
                             setSavePredictionName('');
                             notifications.show({
@@ -826,6 +870,7 @@ export default function SalaryForm() {
                     </Stack>
                   </Card>
                 )}
+
                 {error && (
                   <Text c="red" size="sm">
                     {error}
@@ -851,7 +896,7 @@ export default function SalaryForm() {
                           <Stack gap="md">
                             <Group justify="space-between" wrap="nowrap">
                               <Stack gap={2}>
-                                <Text fw={700} >
+                                <Text fw={700}>
                                   {saved.name}
                                 </Text>
                                 <Text size="xs" c="dimmed">
@@ -862,10 +907,10 @@ export default function SalaryForm() {
 
                             <Stack gap="xs">
                               <Text size="sm">
-                                {saved.formValues.job_title}
+                                {saved.formValues.suburb} {saved.formValues.type}
                               </Text>
-                              <Text size="xs" c="dimmed">
-                                {Object.keys(saved.predictions).length} predictions
+                              <Text fw={700} size="md" c="blue">
+                                ${saved.predictedPrice?.toLocaleString() ?? 'N/A'}
                               </Text>
                             </Stack>
 
@@ -874,9 +919,11 @@ export default function SalaryForm() {
                                 variant="light"
                                 size="xs"
                                 onClick={() => {
-                                  setPredictions(saved.predictions);
+                                  setPredictedPrice(saved.predictedPrice);
+                                  setDuration(saved.duration);
                                   form.setValues(saved.formValues);
                                   setFormExpanded(false);
+                                  setTriggerAnalysis(true); // Trigger analysis when loading a saved prediction
                                   notifications.show({
                                     title: 'Prediction Loaded',
                                     message: `Loaded "${saved.name}"`,
@@ -893,7 +940,7 @@ export default function SalaryForm() {
                                 onClick={() => {
                                   const updatedSavedPredictions = savedPredictions.filter((_, i) => i !== index);
                                   setSavedPredictions(updatedSavedPredictions);
-                                  localStorage.setItem('savedPredictions', JSON.stringify(updatedSavedPredictions));
+                                  localStorage.setItem('savedPropertyPredictions', JSON.stringify(updatedSavedPredictions));
                                   notifications.show({
                                     title: 'Deleted',
                                     message: `Deleted "${saved.name}"`,
@@ -914,23 +961,26 @@ export default function SalaryForm() {
           )}
         </Grid.Col>
 
-        {Object.keys(predictions).length > 0 && (
+        {/* Chat component integration */}
+        {predictedPrice && (
           <Grid.Col
             span={{ base: 12, md: 6 }}
             style={{
               transition: 'all 0.3s ease-out',
-              opacity: Object.keys(predictions).length > 0 ? 1 : 0,
-              transform: Object.keys(predictions).length > 0 ? 'translateX(0)' : 'translateX(20px)',
+              opacity: predictedPrice ? 1 : 0,
+              transform: predictedPrice ? 'translateX(0)' : 'translateX(20px)',
             }}
           >
             <Chat
-              predictions={predictions}
-              jobDetails={form.values}
+              predictedPrice={predictedPrice}
+              duration={duration}
+              propertyDetails={form.values}
               triggerInitialAnalysis={triggerAnalysis}
             />
           </Grid.Col>
         )}
       </Grid>
-    </Paper >
+    </Paper>
   );
 }
+

@@ -3,13 +3,11 @@
 interface SalaryPredictionPayload {
   job_description: string;
   job_title: string;
-  query: string;
   contract_type: string;
   education_level: string;
   seniority: string;
   min_years_experience: string;
   location_us: string[];
-  location_sg: string[];
   location_in: string[];
 }
 
@@ -23,7 +21,6 @@ export async function predictSalary(payload: SalaryPredictionPayload, country_co
       body: JSON.stringify({
         job_description: payload.job_description,
         job_title: payload.job_title,
-        query: payload.query,
         contract_type: payload.contract_type,
         education_level: payload.education_level,
         seniority: payload.seniority,

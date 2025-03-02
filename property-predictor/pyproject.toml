@@ -1,5 +1,6 @@
 [project]
 dependencies = [
+  "kaleido (==0.2.1)",
   "pycaret[models] (==3.3.2)",
   "pandas (==2.1.4)",
   "scikit-learn (==1.4.2)",

@@ -1,0 +1,164 @@
+# Experiment tracking configuration
+experiment:
+  name: "Melbourne Housing Price Prediction"
+  run_name: "data_preprocessing_pipeline"
+  log_experiment: true
+  log_plots: true
+
+# Data configuration
+data:
+  dataset_path: "../datasets/01_Melbourne_Residential.csv"
+  date_format: "%d/%m/%Y"
+  columns:
+    numerical:
+      - "Price"
+      - "Rooms"
+      - "Distance"
+      - "Bedroom2"
+      - "Bathroom"
+      - "Car"
+      - "Landsize"
+      - "BuildingArea"
+      - "YearBuilt"
+      - "Propertycount"
+    categorical:
+      - "Suburb"
+      - "Type"
+      - "Method"
+      - "Seller"
+      - "CouncilArea"
+      - "Region"
+    target: "Price"
+    transformed_target: "Price_Transformed"
+    date: "Date"
+    latitude: "Latitude"
+    longitude: "Longitude"
+
+# Data preprocessing configuration
+preprocessing:
+  columns_to_remove:
+    - "Region"
+    - "CouncilArea"
+    - "Bedroom2"
+    - "Propertycount"
+  column_rename:
+    Lattitude: "Latitude"
+    Longtitude: "Longitude"
+  missing_values:
+    create_indicators: true
+    imputation:
+      building_area:
+        method: "median"
+        group_by: ["Type", "Rooms"]
+      car:
+        method: "median"
+        group_by: ["Type", "Rooms"]
+      bathroom:
+        method: "median"
+        group_by: ["Type"]
+      year_built:
+        method: "median"
+        group_by: ["Suburb"]
+  data_corrections:
+    year_built:
+      min_valid_year: 1840
+      specific_corrections:
+        1196: 1996
+        1830: 1930
+    land_size:
+      handle_zero_with_building: true
+      create_not_owned_flag: true
+    bathrooms:
+      replace_zeros: true
+  outliers:
+    floor_area_ratio:
+      max_ratio: 3
+    building_area:
+      max_percentile: 0.99
+    price_per_sqm:
+      cap_percentiles: [0.01, 0.99]
+
+# Feature engineering configuration
+feature_engineering:
+  property_age:
+    enable: true
+    reference_year: 2018
+  cbd_features:
+    enable: true
+    coordinates:
+      latitude: -37.8183
+      longitude: 144.9671
+    direction_segments:
+      N: [45, 135]
+      E: [0, 45, 315, 360]
+      S: [225, 315]
+      W: [135, 225]
+  encodings:
+    property_type:
+      mapping:
+        h: "House"
+        u: "Unit/Apartment"
+        t: "Townhouse"
+    seller:
+      min_count_for_category: 100
+      other_category: "Other"
+    suburb:
+      use_target_encoding: true
+
+# Transformations configuration
+transformations:
+  box_cox:
+    apply_to:
+      - "Price"
+      - "Landsize"
+      - "BuildingArea"
+      - "Distance"
+      - "Rooms"
+      - "Bathroom"
+      - "Car"
+      - "PropertyAge"
+
+# Model training configuration
+model:
+  train_test_split:
+    test_size: 0.2
+    random_state: 42
+    stratification_method: "price_bin_and_property_type"
+    time_periods: 10
+  pycaret:
+    session_id: 42
+    fold_strategy: "timeseries"
+    fold_shuffle: false
+    data_split_shuffle: false
+    fold: 5
+    ignore_features: ["time_period", "price_bin", "strat_var"]
+  tuning:
+    optimize: "RMSE"
+    n_iter: 10
+    search_library: "optuna"
+    n_select: 5
+
+# Deployment configuration
+deployment:
+  model_name: "housing_price_model"
+  framework: "bentoml"
+  batchable: true
+  batch_dim: 0
+  metadata:
+    description: "Housing price prediction model trained with PyCaret"
+
+# Example prediction input
+example_input:
+  - Suburb: "Reservoir"
+    Rooms: 3
+    Type: "House" 
+    Method: "S"
+    Seller: "Ray"
+    Distance: 11.2
+    Bathroom: 1.0
+    Car: 2
+    Landsize: 556.0
+    BuildingArea: 120.0
+    PropertyAge: 50
+    Direction: "N"
+    LandSizeNotOwned: false

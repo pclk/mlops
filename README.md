@@ -86,6 +86,30 @@ To apply new changes, edit `configs/config.yaml` before running the notebook.
 
 ---
 
+## 🚀 Modifying & Deploying BentoML Service
+
+The BentoML service is located in:
+```
+used-car-predictor/bentoml/service.py
+```
+
+### **1️⃣ Install Dependencies**
+Navigate to the `bentoml` directory and install dependencies:
+
+```bash
+cd used-car-predictor/bentoml
+pip install -r requirements.txt
+```
+
+### **2️⃣ Modify `service.py`**
+Edit `service.py` as needed to update the model serving logic.
+
+### **3️⃣ Deploy the Service**
+Refer to the official BentoML documentation for the latest deployment steps:
+🔗 [BentoML Deployment Guide](https://docs.bentoml.com/en/latest/scale-with-bentocloud/deployment/create-deployments.html)
+
+---
+
 ## 🛠 Technologies Used
 
 | Tool | Purpose |
@@ -95,6 +119,7 @@ To apply new changes, edit `configs/config.yaml` before running the notebook.
 | **DVC** | Dataset versioning |
 | **MLflow** | Experiment tracking |
 | **PyCaret** | Automated machine learning |
+| **BentoML** | Model deployment |
 
 ---
 
@@ -102,12 +127,14 @@ To apply new changes, edit `configs/config.yaml` before running the notebook.
 
 | Task | Command |
 |------|---------|
+| Clone repository | `git clone https://github.com/pclk/mlops` |
 | Install dependencies | `poetry install` |
 | Activate virtual environment | `poetry shell` |
 | Pull dataset from GCS | `dvc pull` |
 | Run Jupyter Notebook | `jupyter notebook` |
 | Modify Hydra config | Edit `configs/config.yaml` |
 | Track changes with DVC | `dvc add datasets/` |
+| Install BentoML dependencies | `pip install -r requirements.txt` |
 
 ---
 

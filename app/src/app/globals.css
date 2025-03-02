@@ -83,6 +83,7 @@ textarea::placeholder {
   color: #888; /* More visible placeholder text */
 }
 
+/* Default button style */
 button {
   padding: 1rem;
   background-color: #0070f3;
@@ -91,11 +92,18 @@ button {
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: transform 0.3s ease-in-out; /* Smooth transition for both enlarge and shrink */
 }
 
+/* Hover effect to change background color */
 button:hover {
   background-color: #005bb5;
+}
+
+/* Scaling effect for buttons that are active (currently corresponding to the section) */
+.button-scale {
+  transform: scale(1.1); /* Enlarges the button by 10% */
+  transition: transform 0.3s ease-in-out; /* Smooth transition when scaling up and down */
 }
 
 /* Prediction result box */

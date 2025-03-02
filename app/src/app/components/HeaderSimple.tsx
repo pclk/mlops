@@ -8,9 +8,8 @@ import { Briefcase } from 'lucide-react';
 import Link from 'next/link';
 
 const links = [
-  { link: '/salary', label: 'Salary' },
-  { link: '/used_car_prediction', label: 'Price' },
-  { link: '/education', label: 'Education' },
+  { link: '/salary', label: 'Property Predictor' },
+  { link: '/used_car_prediction', label: 'Used Car Predictor' },
 ];
 
 export function HeaderSimple() {

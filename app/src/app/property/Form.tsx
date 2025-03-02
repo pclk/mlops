@@ -822,16 +822,16 @@ export default function PropertyPriceForm() {
 
                   {predictedPrice && (
                     <Paper p="xl" withBorder radius="md">
-                      <Stack spacing="lg">
+                      <Stack >
                         <Box>
-                          <Text size="sm" weight={500} color="dimmed" transform="uppercase" mb={4}>
+                          <Text size="sm" mb={4}>
                             Prediction Result
                           </Text>
                           <Title order={3} mb="xs">Predicted Property Price</Title>
                         </Box>
 
                         <Card withBorder shadow="sm" radius="md" p="xl">
-                          <Stack spacing="xl">
+                          <Stack >
                             {/* Main price with visual emphasis */}
                             <Box ta="center" py="md">
                               <Text size="sm" c="dimmed" mb={5}>Estimated Market Value</Text>
@@ -841,9 +841,9 @@ export default function PropertyPriceForm() {
                             </Box>
 
                             <Box>
-                              <Text size="sm" weight={500} c="dimmed" mb={8}>Property Details</Text>
-                              <Group position="apart" spacing="xl">
-                                <Stack spacing={4}>
+                              <Text size="sm" c="dimmed" mb={8}>Property Details</Text>
+                              <Group>
+                                <Stack >
                                   <Text fw={600}>{form.values.suburb}</Text>
                                   <Text size="sm">
                                     {form.values.type === 'h' ? 'House' :
@@ -852,14 +852,14 @@ export default function PropertyPriceForm() {
                                   </Text>
                                 </Stack>
 
-                                <Stack spacing={4} align="flex-end">
+                                <Stack align="flex-end">
                                   <Text fw={600}>{form.values.rooms} {form.values.rooms === 1 ? 'room' : 'rooms'}</Text>
                                   <Text size="sm">{form.values.bathroom} {form.values.bathroom === 1 ? 'bathroom' : 'bathrooms'}</Text>
                                 </Stack>
                               </Group>
                             </Box>
 
-                            <Group position="right">
+                            <Group >
                               <Text size="xs" c="dimmed" style={{ fontStyle: 'italic' }}>
                                 Calculation time: {(duration / 1000).toFixed(2)}s
                               </Text>
@@ -925,112 +925,117 @@ export default function PropertyPriceForm() {
                   )}
                 </Stack>
               </Card>
-            </form>
+            </form >
 
-            {savedPredictions.length > 0 && (
-              <Card withBorder mt="md" id="saved-predictions">
-                <Stack gap="md">
-                  <Group justify="space-between">
-                    <Title order={4}>Saved Predictions</Title>
-                    <Text size="sm" c="dimmed">{savedPredictions.length} saved</Text>
-                  </Group>
-                  <Grid>
-                    {savedPredictions
-                      .sort((a, b) => b.timestamp - a.timestamp)
-                      .map((saved, index) => (
-                        <Grid.Col key={index} span={{ base: 12, sm: 6, lg: 4 }}>
-                          <Card withBorder shadow="sm">
-                            <Stack gap="md">
-                              <Group justify="space-between" wrap="nowrap">
-                                <Stack gap={2}>
-                                  <Text fw={700}>
-                                    {saved.name}
+            {
+              savedPredictions.length > 0 && (
+                <Card withBorder mt="md" id="saved-predictions">
+                  <Stack gap="md">
+                    <Group justify="space-between">
+                      <Title order={4}>Saved Predictions</Title>
+                      <Text size="sm" c="dimmed">{savedPredictions.length} saved</Text>
+                    </Group>
+                    <Grid>
+                      {savedPredictions
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .map((saved, index) => (
+                          <Grid.Col key={index} span={{ base: 12, sm: 6, lg: 4 }}>
+                            <Card withBorder shadow="sm">
+                              <Stack gap="md">
+                                <Group justify="space-between" wrap="nowrap">
+                                  <Stack gap={2}>
+                                    <Text fw={700}>
+                                      {saved.name}
+                                    </Text>
+                                    <Text size="xs" c="dimmed">
+                                      {new Date(saved.timestamp).toLocaleString()}
+                                    </Text>
+                                  </Stack>
+                                </Group>
+
+                                <Stack gap="xs">
+                                  <Text size="sm">
+                                    {saved.formValues.suburb} {saved.formValues.type}
                                   </Text>
-                                  <Text size="xs" c="dimmed">
-                                    {new Date(saved.timestamp).toLocaleString()}
+                                  <Text fw={700} size="md" c="blue">
+                                    ${saved.predictedPrice?.toLocaleString() ?? 'N/A'}
                                   </Text>
                                 </Stack>
-                              </Group>
 
-                              <Stack gap="xs">
-                                <Text size="sm">
-                                  {saved.formValues.suburb} {saved.formValues.type}
-                                </Text>
-                                <Text fw={700} size="md" c="blue">
-                                  ${saved.predictedPrice?.toLocaleString() ?? 'N/A'}
-                                </Text>
+                                <Group grow>
+                                  <Button
+                                    variant="light"
+                                    size="xs"
+                                    onClick={() => {
+                                      setPredictedPrice(saved.predictedPrice);
+                                      setDuration(saved.duration);
+                                      form.setValues(saved.formValues);
+                                      setFormExpanded(false);
+                                      setTriggerAnalysis(true); // Trigger analysis when loading a saved prediction
+                                      notifications.show({
+                                        title: 'Prediction Loaded',
+                                        message: `Loaded "${saved.name}"`,
+                                        color: 'blue',
+                                      });
+                                    }}
+                                  >
+                                    Load
+                                  </Button>
+                                  <Button
+                                    variant="light"
+                                    color="red"
+                                    size="xs"
+                                    onClick={() => {
+                                      const updatedSavedPredictions = savedPredictions.filter((_, i) => i !== index);
+                                      setSavedPredictions(updatedSavedPredictions);
+                                      localStorage.setItem('savedPropertyPredictions', JSON.stringify(updatedSavedPredictions));
+                                      notifications.show({
+                                        title: 'Deleted',
+                                        message: `Deleted "${saved.name}"`,
+                                        color: 'red',
+                                      });
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                </Group>
                               </Stack>
-
-                              <Group grow>
-                                <Button
-                                  variant="light"
-                                  size="xs"
-                                  onClick={() => {
-                                    setPredictedPrice(saved.predictedPrice);
-                                    setDuration(saved.duration);
-                                    form.setValues(saved.formValues);
-                                    setFormExpanded(false);
-                                    setTriggerAnalysis(true); // Trigger analysis when loading a saved prediction
-                                    notifications.show({
-                                      title: 'Prediction Loaded',
-                                      message: `Loaded "${saved.name}"`,
-                                      color: 'blue',
-                                    });
-                                  }}
-                                >
-                                  Load
-                                </Button>
-                                <Button
-                                  variant="light"
-                                  color="red"
-                                  size="xs"
-                                  onClick={() => {
-                                    const updatedSavedPredictions = savedPredictions.filter((_, i) => i !== index);
-                                    setSavedPredictions(updatedSavedPredictions);
-                                    localStorage.setItem('savedPropertyPredictions', JSON.stringify(updatedSavedPredictions));
-                                    notifications.show({
-                                      title: 'Deleted',
-                                      message: `Deleted "${saved.name}"`,
-                                      color: 'red',
-                                    });
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </Group>
-                            </Stack>
-                          </Card>
-                        </Grid.Col>
-                      ))}
-                  </Grid>
-                </Stack>
-              </Card>
-            )}
-          </Grid.Col>
+                            </Card>
+                          </Grid.Col>
+                        ))}
+                    </Grid>
+                  </Stack>
+                </Card>
+              )
+            }
+          </Grid.Col >
 
           {/* Chat component integration */}
-          {predictedPrice && (
-            <Grid.Col
-              span={{ base: 12, md: 6 }}
-              style={{
-                transition: 'all 0.3s ease-out',
-                opacity: predictedPrice ? 1 : 0,
-                transform: predictedPrice ? 'translateX(0)' : 'translateX(20px)',
-              }}
-            >
-              <Chat
-                predictedPrice={predictedPrice}
-                duration={duration}
-                propertyDetails={form.values}
-                triggerInitialAnalysis={triggerAnalysis}
-              />
-            </Grid.Col>
-          )}
-        </Grid>
+          {
+            predictedPrice && (
+              <Grid.Col
+                span={{ base: 12, md: 6 }}
+                style={{
+                  transition: 'all 0.3s ease-out',
+                  opacity: predictedPrice ? 1 : 0,
+                  transform: predictedPrice ? 'translateX(0)' : 'translateX(20px)',
+                }}
+              >
+                <Chat
+                  predictedPrice={predictedPrice}
+                  duration={duration}
+                  propertyDetails={form.values}
+                  triggerInitialAnalysis={triggerAnalysis}
+                />
+              </Grid.Col>
+            )
+          }
+        </Grid >
       ) : (
         <BatchForm />
-      )}
-    </Paper>
+      )
+      }
+    </Paper >
   );
 }
 

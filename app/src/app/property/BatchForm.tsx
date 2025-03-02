@@ -1,17 +1,15 @@
-
-
-import { useState, useRef, useEffect } from 'react';
+"use client"
+import { useState, useRef } from 'react';
 import {
   Box, Card, Group, Stack, Title, Text, Button,
-  FileInput, Progress, Tabs, Table, ActionIcon,
-  LoadingOverlay, Tooltip, Switch, Select,
+  FileInput, Progress, ActionIcon,
+  Tooltip, Select,
   Grid
 } from '@mantine/core';
 import { Modal, TextInput, NumberInput, Checkbox, } from '@mantine/core';
 
 import { notifications } from '@mantine/notifications';
-import { useDisclosure } from '@mantine/hooks';
-import { FileSpreadsheet, Upload, Database, AlertCircle, Download, Edit, Trash, CheckCircle, BrainCircuit } from 'lucide-react';
+import { FileSpreadsheet, Upload, AlertCircle, Edit, Trash, CheckCircle, BrainCircuit } from 'lucide-react';
 import Papa from 'papaparse';
 import { predictPropertyPrice } from './actions'; // Changed to use single prediction function
 import Chat from './Chat'; // Import the Chat component
@@ -59,7 +57,6 @@ export default function BatchPredictionForm() {
   const [batchResults, setBatchResults] = useState<BatchPredictionResult | null>(null);
   const [viewMode, setViewMode] = useState<'input' | 'results'>('input');
   const [progress, setProgress] = useState<ProgressState>({ current: 0, total: 1 });
-  const csvReaderRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
   const [showBatchAnalysis, setShowBatchAnalysis] = useState(false);
   const [analysisProperty, setAnalysisProperty] = useState<any | null>(null);
@@ -103,7 +100,7 @@ export default function BatchPredictionForm() {
           setParsedData(formattedData);
           validateBatchData(formattedData);
         },
-        error: (error) => {
+        error: (error: any) => {
           notifications.show({
             title: 'Error Parsing CSV',
             message: error.message,
@@ -116,7 +113,7 @@ export default function BatchPredictionForm() {
   };
 
   // Excel parsing function (placeholder - would require xlsx library)
-  const parseExcel = (file: File) => {
+  const parseExcel = (_file: File) => {
     notifications.show({
       title: 'Feature Not Available',
       message: 'Excel parsing is not implemented yet. Please use CSV format.',
@@ -199,7 +196,7 @@ export default function BatchPredictionForm() {
           {
             accessor: 'status',
             title: 'Status',
-            render: (row, index) => validationResults[index]?.hasErrors ? (
+            render: (_, index) => validationResults[index]?.hasErrors ? (
               <Tooltip label={validationResults[index].errors.join('\n')}>
                 <Group>
                   <AlertCircle size={16} color="red" />
@@ -229,10 +226,10 @@ export default function BatchPredictionForm() {
           }
         ]}
         records={data}
-        rowStyle={(row, index) => ({
+        rowStyle={(_, index) => ({
           backgroundColor: validationResults[index]?.hasErrors ? 'rgba(255, 0, 0, 0.05)' : undefined
         })}
-        emptyState={<Text >No properties loaded. Upload a CSV file to get started.</Text>}
+        emptyState={<Text>No properties loaded. Upload a CSV file to get started.</Text>}
       />
     );
   };
@@ -409,11 +406,11 @@ export default function BatchPredictionForm() {
   // Component JSX
   return (
     <Box>
-      <Stack >
+      <Stack>
         {viewMode === 'input' ? (
           <>
             <Card withBorder p="md">
-              <Stack >
+              <Stack>
                 <Title order={3}>Batch Property Price Prediction</Title>
                 <Text size="sm">
                   Upload a CSV file with multiple properties to predict prices in batch.
@@ -428,7 +425,7 @@ export default function BatchPredictionForm() {
                   onChange={handleFileUpload}
                 />
 
-                <Group >
+                <Group>
                   <Button
                     variant="outline"
                     leftSection={<FileSpreadsheet size={16} />}
@@ -452,8 +449,8 @@ export default function BatchPredictionForm() {
 
             {parsedData.length > 0 && (
               <Card withBorder p="md">
-                <Stack >
-                  <Group >
+                <Stack>
+                  <Group>
                     <Title order={4}>Data Preview</Title>
                     <Text size="sm">{parsedData.length} properties loaded</Text>
                   </Group>
@@ -475,8 +472,8 @@ export default function BatchPredictionForm() {
               <Grid gutter="md">
                 <Grid.Col span={showBatchAnalysis ? 7 : 12}>
                   <Card withBorder p="md">
-                    <Stack >
-                      <Group >
+                    <Stack>
+                      <Group>
                         <Title order={3}>Batch Results</Title>
                         <Text size="sm">Processing time: {(batchResults.processingTime / 1000).toFixed(2)} seconds</Text>
                       </Group>
@@ -531,7 +528,7 @@ export default function BatchPredictionForm() {
                         noRecordsText="No prediction results available"
                       />
 
-                      <Group >
+                      <Group>
                         <Text>Successfully predicted prices for {batchResults.properties.length} properties</Text>
                         <Button onClick={() => setViewMode('input')}>
                           Start New Batch
@@ -597,14 +594,14 @@ export default function BatchPredictionForm() {
 
         {isProcessing && (
           <Card withBorder p="md">
-            <Stack >
+            <Stack>
               <Text>Processing batch prediction...</Text>
               <Progress
                 value={(progress.current / progress.total) * 100}
                 animated={isLoading}
                 size="lg"
               />
-              <Text size="xs" >
+              <Text size="xs">
                 {isLoading
                   ? `Processing property ${progress.current + 1} of ${progress.total}...`
                   : "Processing complete!"}
@@ -620,7 +617,7 @@ export default function BatchPredictionForm() {
         size="lg"
       >
         {editingProperty && (
-          <Stack spacing="md">
+          <Stack gap="md">
             <TextInput
               label="Suburb"
               required
@@ -692,7 +689,7 @@ export default function BatchPredictionForm() {
               onChange={(e) => setEditingProperty({ ...editingProperty, landSizeNotOwned: e.currentTarget.checked })}
             />
 
-            <Group position="right" mt="md">
+            <Group justify="flex-end" mt="md">
               <Button variant="outline" onClick={() => setEditModalOpen(false)}>Cancel</Button>
               <Button onClick={savePropertyEdit}>Save Changes</Button>
             </Group>
@@ -710,7 +707,6 @@ function BatchSummaryCard({ properties, predictions }: { properties: any[], pred
   const avgPrice = predictions.reduce((sum, price) => sum + price, 0) / predictions.length;
   const minPrice = Math.min(...predictions);
   const maxPrice = Math.max(...predictions);
-  const priceRange = maxPrice - minPrice;
   const propertyTypeLabels: Record<string, string> = {
     'h': 'House',
     't': 'Townhouse',
@@ -719,7 +715,7 @@ function BatchSummaryCard({ properties, predictions }: { properties: any[], pred
 
 
   // Group properties by type
-  const typeGroups = properties.reduce((groups: any, property, index) => {
+  const typeGroups = properties.reduce((groups: Record<string, any[]>, property, index) => {
     const type = property.type;
     if (!groups[type]) {
       groups[type] = [];
@@ -733,10 +729,10 @@ function BatchSummaryCard({ properties, predictions }: { properties: any[], pred
 
   return (
     <Card withBorder p="md" mt="md">
-      <Stack >
+      <Stack>
         <Title order={4}>Batch Analysis Summary</Title>
 
-        <Group >
+        <Group>
           <Text size="sm">Average Price: <Text span fw={600}>${avgPrice.toLocaleString()}</Text></Text>
           <Text size="sm">Price Range: <Text span fw={600}>${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}</Text></Text>
           <Text size="sm">Properties: <Text span fw={600}>{properties.length}</Text></Text>
@@ -767,7 +763,7 @@ function BatchSummaryCard({ properties, predictions }: { properties: any[], pred
               render: (row) => `$${row.minPrice.toLocaleString()} - $${row.maxPrice.toLocaleString()}`
             }
           ]}
-          records={Object.entries(typeGroups).map(([type, props]: [string, any[]]) => {
+          records={Object.entries(typeGroups).map(([type, props]) => {
             const typePrices = props.map(p => p.prediction);
             const typeAvg = typePrices.reduce((sum, price) => sum + price, 0) / typePrices.length;
             const typeMin = Math.min(...typePrices);
@@ -789,4 +785,6 @@ function BatchSummaryCard({ properties, predictions }: { properties: any[], pred
     </Card>
   );
 }
+
+
 

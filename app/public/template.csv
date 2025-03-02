@@ -1,0 +1,11 @@
+suburb,rooms,type,method,seller,distance,bathroom,car,landsize,buildingArea,propertyAge,direction,landSizeNotOwned
+Brunswick,2,t,S,Jellis Craig,5.2,1,1,180,95,20,S,false
+Richmond,3,h,S,Nelson Alexander,3.8,2,1,320,140,40,E,false
+Carlton,1,u,SP,Hocking Stuart,2.5,1,0,140,45,15,W,true
+St Kilda,2,u,PI,Ray White,6.3,1,1,40,68,25,S,true
+Footscray,3,h,S,Jas Stephens,7.1,1,2,450,120,60,N,false
+Hawthorn,4,h,S,Marshall White,6.5,3,2,650,220,70,E,false
+South Yarra,2,u,A,Kay & Burton,4.2,2,1,148,85,10,N,true
+Coburg,3,t,S,Barry Plant,8.7,2,1,220,115,25,W,false
+Kew,5,h,S,RT Edgar,6.8,3,3,850,310,45,S,false
+Yarraville,2,t,S,Biggin & Scott,8.3,1,1,200,90,30,E,false

@@ -44,9 +44,10 @@ interface ChatProps {
     landSizeNotOwned: boolean;
   };
   triggerInitialAnalysis?: boolean;
+  isBatchMode?: boolean; // Add this prop
 }
 
-export default function Chat({ predictedPrice, duration, propertyDetails, triggerInitialAnalysis }: ChatProps) {
+export default function Chat({ predictedPrice, duration, propertyDetails, triggerInitialAnalysis, isBatchMode }: ChatProps) {
   const [modelConfig, setModelConfig] = useState<ModelConfig>({
     propertyMarketFactors: {
       interestRate: 5.5,
@@ -70,12 +71,14 @@ export default function Chat({ predictedPrice, duration, propertyDetails, trigge
     }
   };
 
+  // Modify initial message to acknowledge batch mode
   const [messages, setMessages] = useState<Message[]>([
     {
       content:
         `# 👋 Hello!
 
 I'm your property price prediction assistant. I can help you understand the property price prediction for **${propertyDetails.suburb || 'your property'}**.
+${isBatchMode ? '\n*This property is part of a batch analysis.*' : ''}
 
 Here are some things you can ask me about:
 - Property price analysis and comparisons
@@ -96,12 +99,19 @@ Feel free to ask any questions!`,
 
   useEffect(() => {
     if (triggerInitialAnalysis && predictedPrice) {
-      const initialPrompt = "Please analyze the property price prediction and provide a comprehensive assessment.\
-        Include insights about location value, property features, and current market conditions.\
-        Use numbers, percentages and math to explore and illustrate your point.\
-        Compare with typical property values in the area and discuss potential investment value.\
-        At the end, provide 3 suggestions for improving property value, and ask 3 questions to know more about the user's goals.\
-        Start with 'Hi there! I saw you just made a property price prediction! ...'";
+      const initialPrompt = isBatchMode
+        ? "Please analyze this property from a batch of properties. The user is analyzing multiple properties at once.\
+           Provide a concise yet comprehensive assessment of this specific property.\
+           Include insights about location value, property features, and how this property compares to typical properties in the area.\
+           At the end, provide 2-3 brief suggestions for improving property value.\
+           Start with 'Let me analyze this specific property from your batch...'"
+        : "Please analyze the property price prediction and provide a comprehensive assessment.\
+           Include insights about location value, property features, and current market conditions.\
+           Use numbers, percentages and math to explore and illustrate your point.\
+           Compare with typical property values in the area and discuss potential investment value.\
+           At the end, provide 3 suggestions for improving property value, and ask 3 questions to know more about the user's goals.\
+           Start with 'Hi there! I saw you just made a property price prediction! ...'";
+
       handleSubmit(new Event('submit') as any, initialPrompt);
     }
   }, [triggerInitialAnalysis, predictedPrice]);

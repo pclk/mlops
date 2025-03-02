@@ -68,7 +68,7 @@ export default function Main() {
     setLastHoveredButton(section);
     setIsHovered(true);
     setAutoTransition(false);
-  };  
+  };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
@@ -88,7 +88,7 @@ export default function Main() {
         <Group justify="center" mt="md">
           <Button
             component={Link}
-            href="/salary"
+            href="/property"
             size="lg"
             variant="gradient"
             gradient={{ from: 'blue', to: 'cyan' }}

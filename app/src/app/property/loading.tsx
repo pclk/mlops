@@ -1,12 +1,12 @@
 'use client';
 
 import { Container, SimpleGrid } from '@mantine/core';
-import SalaryFormSkeleton from './SalaryFormSkeleton';
+import FormSkeleton from './FormSkeleton';
 
 export default function LoadingSalaryPage() {
   return (
     <Container size="xl" py="xl" style={{ height: '100svh' }}>
-      <SalaryFormSkeleton />
+      <FormSkeleton />
     </Container>
   );
 }
